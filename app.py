@@ -98,6 +98,8 @@ def main():
                         with gr.Column():
                             with gr.Group():
                                 with gr.Row():
+                                    gr.Markdown('Once generation finished, select one image in Gallery and click \'Sent to SR model\' to adapt super resolution!')
+                                with gr.Row():
                                     run_button = gr.Button('Run Generation', variant="primary")
                                     copy_button = gr.Button('Sent to SR model', variant="primary")
                                 with gr.Tabs():
@@ -149,6 +151,7 @@ def main():
                                                         step=0.01,
                                                         value=0.9,
                                                         label='Weight of Prompt Text')
+
 
                 with gr.Column():
                     with gr.Group():
