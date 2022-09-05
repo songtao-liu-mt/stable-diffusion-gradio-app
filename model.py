@@ -56,7 +56,7 @@ def load_img(image, W, H):
 class AppModel():
     def __init__(self,):
         self.config = OmegaConf.load("configs/stable-diffusion/v1-inference.yaml")
-        self.model = load_model_from_config(self.config, "models/ldm/stable-diffusion-v1/sd-v1-4.ckpt")
+        self.model = load_model_from_config(self.config, "models/ldm/stable-diffusion-v1/model.ckpt")
 
         device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
         self.device = device
@@ -110,7 +110,8 @@ class AppModel():
 
                             for x_sample in x_samples_ddim:
                                 x_sample = 255. * rearrange(x_sample.cpu().numpy(), 'c h w -> h w c')
-                                all_samples.append(x_sample.astype(np.uint8))
+                                image = Image.fromarray(x_sample.astype(np.uint8))
+                                all_samples.append(image)
 
                         # additionally, grid image
                         grid = torch.stack([x_samples_ddim], 0)
@@ -159,7 +160,8 @@ class AppModel():
 
                             for x_sample in x_samples:
                                 x_sample = 255. * rearrange(x_sample.cpu().numpy(), 'c h w -> h w c')
-                                all_samples.append(x_sample.astype(np.uint8))
+                                image = Image.fromarray(x_sample.astype(np.uint8))
+                                all_samples.append(image)
 
                         # additionally, save as grid
                         grid = torch.stack([x_samples], 0)
