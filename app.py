@@ -10,6 +10,7 @@ from io import BytesIO
 import mimetypes
 import base64
 import json
+import torch
 
 import gradio as gr
 
@@ -34,6 +35,10 @@ def readTextFile(*args):
     with open(entry, "r", encoding="utf8") as f:
         data = f.read()
     return data
+
+def torch_gc():
+    torch.cuda.empty_cache()
+    torch.cuda.ipc_collect()
 
 def js():
     data = readTextFile("js", "index.js")
@@ -121,14 +126,14 @@ def main():
                                                     value=42,
                                                     label='Seed')
                                 width = gr.Slider(512,
-                                                    640,
+                                                    1024,
                                                     step=32,
-                                                    value=512,
+                                                    value=1024,
                                                     label='width')
                                 height = gr.Slider(512,
-                                                    640,
+                                                    576,
                                                     step=32,
-                                                    value=512,
+                                                    value=576,
                                                     label='height')
 
                                 scale = gr.Slider(1.0,
@@ -142,9 +147,9 @@ def main():
                                                     value=50,
                                                     label='steps')
                                 num_images = gr.Slider(1,
-                                                        4,
+                                                        1,
                                                         step=1,
-                                                        value=4,
+                                                        value=1,
                                                         label='Number of Images')
                                 strength = gr.Slider(0.0,
                                                         0.99,

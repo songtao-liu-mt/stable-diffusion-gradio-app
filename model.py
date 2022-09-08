@@ -22,6 +22,10 @@ def chunk(it, size):
     it = iter(it)
     return iter(lambda: tuple(islice(it, size)), ())
 
+def torch_gc():
+    torch.cuda.empty_cache()
+    torch.cuda.ipc_collect()
+
 
 def load_model_from_config(config, ckpt, verbose=False):
     print(f"Loading model from {ckpt}")
@@ -69,6 +73,7 @@ class AppModel():
         self.f = 8 # downsampling factors
 
     def run_with_prompt(self, seed, prompt, n_samples, W, H, scale, ddim_steps,  strength=0., init_img=None):
+        torch_gc()
         seed_everything(seed)
         ddim_eta=0.0
 
@@ -88,6 +93,7 @@ class AppModel():
                     with self.model.ema_scope():
                         all_samples = list()
                         for prompts in tqdm(data, desc="data"):
+                            torch_gc()
                             uc = None
                             if scale != 1.0:
                                 uc = self.model.get_learned_conditioning(batch_size * [""])
@@ -121,13 +127,16 @@ class AppModel():
                         # to image
                         grid = 255. * rearrange(grid, 'c h w -> h w c').cpu().numpy()
                         grid = grid.astype(np.uint8)
+                        torch_gc()
 
                         return grid, all_samples
         else:
             init_image = load_img(init_img, W, H).to(self.device)
             init_image = repeat(init_image, '1 ... -> b ...', b=batch_size)
+            torch_gc()
             with precision_scope(device_type='cuda', dtype=torch.float16):
                 init_latent = self.model.get_first_stage_encoding(self.model.encode_first_stage(init_image))  # move to latent space
+            torch_gc()
 
             sampler = self.img_sampler
 
@@ -171,7 +180,7 @@ class AppModel():
                         # to image
                         grid = 255. * rearrange(grid, 'c h w -> h w c').cpu().numpy()
                         grid = grid.astype(np.uint8)
-
+                        torch_gc()
                         return grid, all_samples
             
 
