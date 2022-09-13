@@ -126,14 +126,14 @@ def main():
                                                     value=42,
                                                     label='Seed')
                                 width = gr.Slider(512,
-                                                    1024,
-                                                    step=32,
-                                                    value=1024,
+                                                    960,
+                                                    step=64,
+                                                    value=960,
                                                     label='width')
                                 height = gr.Slider(512,
                                                     576,
-                                                    step=32,
-                                                    value=576,
+                                                    step=64,
+                                                    value=512,
                                                     label='height')
 
                                 scale = gr.Slider(1.0,
