@@ -3,3 +3,9 @@ outputs/
 models/
 *.pth
 *.egg-info/
+CompsVis/
+DAIN/
+ebsynth/
+logger.log
+.vscode/
+.git/

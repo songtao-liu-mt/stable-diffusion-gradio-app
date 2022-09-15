@@ -16,6 +16,11 @@ import gradio as gr
 
 from model import AppModel
 
+
+__dir__ = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(__dir__)
+from diffusers_func import inpaint_predict, outpaint_predict, multi2image_predict, text2image_predict, variance_predict, copy_res_to_img
+
 DESCRIPTION = '''# text2image New version with Stable Diffusion!
 Note: This application accepts ONLY English as input.
 '''
@@ -89,6 +94,7 @@ class RealESGAN_warp:
 
 
 def main():
+    gr.close_all()
     args = parse_args()
     model = AppModel()
 
@@ -208,6 +214,260 @@ def main():
         load_detector = gr.Number(value=0, label="Load Detector", visible=False)
         load_detector.change(None, None, None, _js=js())
         demo.load(lambda x: 42, inputs=load_detector, outputs=load_detector)
+        
+        gr.Markdown('\n')
+        gr.Markdown('---')
+        gr.Markdown('\n')
+        gr.Markdown('# Text to Multiple Images')
+        with gr.Row():
+            
+            with gr.Column():
+            
+                with gr.Row():
+                    text_prompt = gr.Textbox(label='Prompt', lines=16)
+                # with gr.Row():
+                #     lang = gr.Radio(choices=['en', 'ch'], value='en', label="Please Select the Language")
+                with gr.Row():
+                    fixed_size = gr.Slider(256, 1024, step=32, value=512, label="Image Size")
+                with gr.Row():
+                    num_images = gr.Slider(1, 49, step=1, value=9, label="Number of Images")
+                with gr.Row():
+                    seed = gr.Slider(0, 4044, step=1, value=2022, label="Seed")
+                with gr.Row(variant='panel'):
+                    run_button = gr.Button('Run')
+            
+            with gr.Column():
+                with gr.Group():
+                    with gr.Tabs():
+                        with gr.TabItem("Output (Grid View)"):
+                            result_grids = gr.Image(show_label=False)
+                        with gr.TabItem("Output (Gallery)"):
+                            result_gallery = gr.Gallery(show_label=False)
+            
+        run_button.click(fn=text2image_predict,
+                         inputs=[
+                             text_prompt,
+                            #  lang, 
+                             fixed_size,
+                             num_images,
+                             seed
+                         ],
+                         outputs=[
+                             result_grids,
+                             result_gallery
+                         ])
+        
+        gr.Markdown('\n')
+        gr.Markdown('---')
+        gr.Markdown('\n')
+        gr.Markdown('# Images Variance')
+        
+        with gr.Row():
+            
+            with gr.Column():
+            
+                with gr.Row():
+                    text_prompt = gr.Textbox(label='Text Prompt', lines=16)
+                with gr.Row():
+                    strength = gr.Slider(0, 10, step=1, value=8, label="Variance Strength")
+                with gr.Row():
+                    num_images = gr.Slider(1, 49, step=1, value=9, label="Number of Images")
+                with gr.Row():
+                    seed = gr.Slider(0, 4044, step=1, value=2022, label="Seed")
+                with gr.Row(variant='panel'):
+                    run_button = gr.Button('Run')
+            
+            with gr.Column():
+                with gr.Group():
+                    with gr.Tabs():
+                        with gr.TabItem("Output (Grid View)"):
+                            result_grids = gr.Image(show_label=False)
+                        with gr.TabItem("Output (Gallery)"):
+                            result_gallery = gr.Gallery(show_label=False)
+            
+        run_button.click(fn=variance_predict,
+                         inputs=[
+                             text_prompt,
+                             strength,
+                             num_images,
+                             seed
+                         ],
+                         outputs=[
+                             result_grids,
+                             result_gallery
+                         ])
+        gr.Markdown('\n')
+        gr.Markdown('---')
+        gr.Markdown('\n')
+        gr.Markdown('# Iterative Creation')
+        with gr.Row():
+            with gr.Column():
+            
+                
+                with gr.Row():
+                    text_prompt = gr.Textbox(label='Text Prompt', lines=14)
+                with gr.Row():
+                    original_image = gr.Image(show_label=False, elem_id="select_image", type='pil')
+                with gr.Row():
+                    strength = gr.Slider(0, 10, step=1, value=8, label="Variance Strength")  
+                with gr.Row():
+                    seed = gr.Slider(0, 4044, step=1, value=2022, label="Seed")
+                with gr.Row(variant='panel'):
+                    run_button = gr.Button('Run')
+            
+            with gr.Column():
+                with gr.Group():
+                    with gr.Tabs():
+                        with gr.TabItem("Output (Grid View)"):
+                            # result_grids = gr.Image(show_label=False, elem_id="result_outputs")
+                            result_grids = gr.Image(show_label=False, shape=[512, 512])
+                        with gr.TabItem("Output (Gallery)"):
+                            result_gallery = gr.Gallery(show_label=False, elem_id="result_outputs")
+                with gr.Row():
+                    select_index = gr.Radio(choices=[1, 2, 3, 4, 5, 6, 7, 8, 9], value=1, label="Please Select the Candidate Image")
+                with gr.Row():
+                    select_button = gr.Button('Select', variant="primary")            
+            
+        run_button.click(fn=multi2image_predict,
+                         inputs=[
+                             original_image,
+                             text_prompt,
+                             strength,
+                             seed
+                         ],
+                         outputs=[
+                             result_grids,
+                             result_gallery
+                         ])
+        select_button.click(fn=copy_res_to_img,
+                          inputs=[result_gallery, 
+                                  select_index
+                                  ],
+                          outputs=[original_image],
+                          )
+        
+        gr.Markdown('\n')
+        gr.Markdown('---')
+        gr.Markdown('\n')
+        gr.Markdown('# Image Inpainting')
+        with gr.Row():
+            
+            with gr.Column():
+            
+                with gr.Row():
+                    original_image = gr.Image(source = 'upload', tool = 'sketch', type = 'pil')
+                with gr.Row():
+                    text_prompt = gr.Textbox(label='Text Prompt', lines=8)
+                with gr.Row():
+                    num_images = gr.Slider(1, 49, step=1, value=4, label="Number of Images")
+                with gr.Row():
+                    seed = gr.Slider(0, 4044, step=1, value=2022, label="Seed")
+                with gr.Row(variant='panel'):
+                    run_button = gr.Button('Run')
+            
+            with gr.Column():
+                with gr.Group():
+                    with gr.Tabs():
+                        with gr.TabItem("Output (Grid View)"):
+                            result_grids = gr.Image(show_label=False)
+                        with gr.TabItem("Output (Gallery)"):
+                            result_gallery = gr.Gallery(show_label=False)
+            
+        run_button.click(fn=inpaint_predict,
+                         inputs=[
+                             original_image,
+                             text_prompt,
+                             num_images,
+                             seed
+                         ],
+                         outputs=[
+                             result_grids,
+                             result_gallery
+                         ])
+        gr.Markdown('\n')
+        gr.Markdown('---')
+        gr.Markdown('\n')
+        gr.Markdown('# Image Outpainting')
+        with gr.Row():
+            with gr.Column():
+            
+                with gr.Row():
+                    original_image = gr.Image(source = 'upload', type = 'pil', label='Please Select Image with Maxinimal Size 1024')
+                with gr.Row():
+                    text_prompt = gr.Textbox(label='Prompt', lines=8)
+                with gr.Row():
+                    direction = gr.Radio(choices=['left', 'right', 'top', 'bottom'], value='left', label="Please Select the Outpainting Direction")
+                with gr.Row():
+                    expand_size = gr.Slider(0, 512, step=64, label='Outpainting Size')
+                with gr.Row():
+                    num_images = gr.Slider(1, 49, step=1, value=4, label="Number of Images")
+                with gr.Row():
+                    seed = gr.Slider(0, 4044, step=1, value=2022, label="Seed")
+                with gr.Row(variant='panel'):
+                    run_button = gr.Button('Run')
+            
+            with gr.Column():
+                with gr.Group():
+                    with gr.Tabs():
+                        with gr.TabItem("Output (Grid View)"):
+                            result_grids = gr.Image(show_label=False)
+                        with gr.TabItem("Output (Gallery)"):
+                            result_gallery = gr.Gallery(show_label=False)
+            
+        run_button.click(fn=outpaint_predict,
+                         inputs=[
+                             original_image,
+                             text_prompt,
+                             direction,
+                             expand_size,
+                             num_images,
+                             seed
+                         ],
+                         outputs=[
+                             result_grids,
+                             result_gallery
+                         ])
+        
+        gr.Markdown('\n')
+        gr.Markdown('---')
+        gr.Markdown('\n')
+        gr.Markdown('# Image Sketch')
+        with gr.Row():
+            with gr.Column():
+            
+                with gr.Row():
+                    original_image = gr.Image(source = 'canvas', type = 'pil')
+                with gr.Row():
+                    text_prompt = gr.Textbox(label='Prompt', lines=8)
+                with gr.Row():
+                    num_images = gr.Slider(1, 49, step=1, value=4, label="Number of Images")
+                with gr.Row():
+                    strength = gr.Slider(0, 10, step=1, value=8, label="Variance Strength")
+                with gr.Row():
+                    seed = gr.Slider(0, 4044, step=1, value=2022, label="Seed")
+                with gr.Row(variant='panel'):
+                    run_button = gr.Button('Run')
+            
+            with gr.Column():
+                with gr.Group():
+                    with gr.Tabs():
+                        with gr.TabItem("Output (Grid View)"):
+                            result_grids = gr.Image(show_label=False)
+                        with gr.TabItem("Output (Gallery)"):
+                            result_gallery = gr.Gallery(show_label=False)
+            
+        run_button.click(fn=multi2image_predict,
+                         inputs=[
+                             original_image,
+                             text_prompt,
+                             strength,
+                             seed,
+                             num_images
+                         ],
+                         outputs=[
+                             result_grids,
+                             result_gallery
+                         ])
 
     demo.launch(
         server_name="0.0.0.0",
