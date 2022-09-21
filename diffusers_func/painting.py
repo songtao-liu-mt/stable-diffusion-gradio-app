@@ -6,54 +6,34 @@ from einops import rearrange
 import torch
 import random
 import numpy as np
-from PIL import Image, ImageFilter
+from PIL import Image
 import PIL
 import cv2
 import math
 import gc
-from diffusers_utils import paint_pipeline, image2image_pipeline, text2image_pipeline, device
+from diffusers_utils import paint_pipeline, image2image_pipeline, text2image_pipeline, deal_width_exceed_maxside, image_grid, GaussianBlur, device, MAX_SIDE
 import gradio as gr
 
-class GaussianBlur(ImageFilter.Filter):
-    
-    def __init__(self, radius=100, bounds=None):
-        self.radius = radius
-        self.bounds = bounds
-    
-    def filter(self, image):
-        if self.bounds:
-            clips = image.crop(self.bounds).gaussian_blur(self.radius)
-            image.paste(clips, self.bounds)
-            return image
-        else:
-            return image.gaussian_blur(self.radius)
-        
-def image_grid(imgs, num_images):
-    w, h = imgs[0].size
-    rows = math.floor(num_images ** 0.5)
-    cols = rows
-    grids = Image.new('RGB', size=(cols * w, rows*h))
-    grid_w, grid_h = grids.size
-    for i, img in enumerate(imgs):
-        grids.paste(img, box=(i % cols * w, i // cols * h))
-    return grids
-
-def inpaint_predict(dict, prompt, width, height, steps=50, scale=7.5, strength=0.8, seed=42, num_images=4):
+def inpaint_predict(dict, prompt, steps=50, scale=7.5, strength=0.8, seed=42):
     gc.collect()
     torch.cuda.empty_cache()
-    button_update = gr.Button.update(visible=True)
-    init_img = dict['image'].convert("RGB").resize((width, height))
-    mask_img = dict['mask'].convert("RGB").resize((width, height))
-    result_images = []
-    with autocast("cuda"):
-        for i in range(num_images):
-            generator = torch.Generator("cuda").manual_seed(seed + i)
-            images = paint_pipeline(prompt=prompt, init_image=init_img, mask_image=mask_img, num_inference_steps=steps, guidance_scale=scale, strength=strength, generator=generator)["sample"]
-            result_images.append(images[0])
+    button_update_1 = gr.Button.update(value='Re-Run Generation')
+    button_update_2 = gr.Button.update(visible=True)
+    button_update_3 = gr.Button.update(visible=False)
     
-    grids = image_grid(result_images, num_images)
+    init_img = dict['image'].convert("RGB")
+    mask_img = dict['mask'].convert("RGB")
+    init_img = deal_width_exceed_maxside(init_img)
+    mask_img = deal_width_exceed_maxside(mask_img)
+    w, h = init_img.size
+    
+    with autocast("cuda"):
+        generator = torch.Generator("cuda").manual_seed(seed)
+        images = paint_pipeline(prompt=prompt, init_image=init_img, mask_image=mask_img, num_inference_steps=steps, guidance_scale=scale, strength=strength, generator=generator)["sample"]
+        result_image = images[0]
+    
 
-    return grids, result_images, button_update
+    return result_image, button_update_1, button_update_2, button_update_3
 
 
 def outpaint_predict(image, prompt, direction, expand_lenth, steps=50, scale=7.5, strength=0.8, seed=2022):
@@ -63,10 +43,9 @@ def outpaint_predict(image, prompt, direction, expand_lenth, steps=50, scale=7.5
     button_update_1 = gr.Button.update(value='Re-Run Generation')
     button_update_2 = gr.Button.update(visible=True)
     button_update_3 = gr.Button.update(visible=False)
+
+    image = deal_width_exceed_maxside(image)
     w, h = image.size
-    max_side = 1024
-    w, h = map(lambda x: x - x % 64, (w, h))
-    image = image.resize((w, h), resample=PIL.Image.LANCZOS)
     assert expand_lenth % 64 == 0
     if direction == 'left' or direction == 'right':
         w_expanded = w +  expand_lenth
@@ -74,12 +53,12 @@ def outpaint_predict(image, prompt, direction, expand_lenth, steps=50, scale=7.5
     else:
         w_expanded = w
         h_expanded = h + expand_lenth
-    if w_expanded > max_side:
-        expand_lenth = max_side - w
-        w_expanded = max_side
-    if h_expanded > max_side:
-        expand_lenth = max_side - h
-        h_expanded = max_side
+    if w_expanded > MAX_SIDE:
+        expand_lenth = MAX_SIDE - w
+        w_expanded = MAX_SIDE
+    if h_expanded > MAX_SIDE:
+        expand_lenth = MAX_SIDE - h
+        h_expanded = MAX_SIDE
     if h_expanded == h and w_expanded == w:
         result_image = image
         return result_image, button_update_1, button_update_2, button_update_3

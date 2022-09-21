@@ -19,7 +19,7 @@ import gradio as gr
 
 __dir__ = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(__dir__)
-from diffusers_func import inpaint_predict, outpaint_predict, multi2image_predict, text2image_predict, variance_predict, copy_res_to_img
+from diffusers_func import inpaint_predict, outpaint_predict, multi2image_predict, text2image_predict, variance_predict
 
 DESCRIPTION = '''# Text to Image New Version with Stable Diffusion
 Note: This application accepts ONLY English as input.
@@ -102,6 +102,16 @@ def cp_to_original(img):
     except IndexError:
         return [None] * 4
     
+def cp_to_original_inpaint(img):
+    try:
+        button_update_1 = gr.Button.update(value='Run Generation')
+        button_update_2 = gr.Button.update(visible=False)
+        button_update_3 = gr.Button.update(visible=True)
+        result_img = gr.Image.update(value=img)
+        return result_img, button_update_1, button_update_2, button_update_3
+    except IndexError:
+        return [None] * 4
+    
 def change_status():
     return gr.Text.update(value="Re-Run")   
 class RealESGAN_warp:
@@ -179,12 +189,12 @@ def main():
                                                         0.99,
                                                         step=0.01,
                                                         value=0.9,
-                                                        label='Weight of Prompt Text')
+                                                        label='text weight')
                                 seed = gr.Slider(0,
                                                     1000,
                                                     step=1,
                                                     value=42,
-                                                    label='Seed')
+                                                    label='seed')
                                 num_images = gr.Slider(1,
                                                         9,
                                                         step=1,
@@ -290,12 +300,12 @@ def main():
                                                         0.99,
                                                         step=0.01,
                                                         value=0.9,
-                                                        label='Weight of Prompt Text')
+                                                        label='text weight')
                                 seed = gr.Slider(0,
                                                     1000,
                                                     step=1,
                                                     value=42,
-                                                    label='Seed')
+                                                    label='seed')
                                 num_images = gr.Slider(1,
                                                         9,
                                                         step=1,
@@ -343,6 +353,7 @@ def main():
                                             fromId="variance_outputs",
                                             toId="hr_outputs")
                                 )                       
+            
             with gr.TabItem('Image Sketch'):
                 with gr.Row():
                     with gr.Row():
@@ -381,12 +392,12 @@ def main():
                                                         0.99,
                                                         step=0.01,
                                                         value=0.9,
-                                                        label='Weight of Prompt Text')
+                                                        label='text weight')
                                 seed = gr.Slider(0,
                                                     1000,
                                                     step=1,
                                                     value=42,
-                                                    label='Seed')
+                                                    label='seed')
                                 num_images = gr.Slider(1,
                                                         9,
                                                         step=1,
@@ -439,102 +450,7 @@ def main():
                                             fromId="sketch_outputs",
                                             toId="hr_outputs")
                                 )
-
         
-            with gr.TabItem('Image Inpainting'):
-                with gr.Row():
-                    with gr.Row():
-                        with gr.Column():
-                            with gr.Group():
-                                with gr.Tabs():
-                                    with gr.TabItem('Image Prompt'):
-                                        init_img = gr.Image(type="pil", label="Initial image here", tool='sketch')
-                                    with gr.TabItem('Text Prompt'):
-                                        text_prompt = gr.Textbox(lines=12, label='Input Text')
-                                with gr.Row():
-                                    run_button = gr.Button('Run Generation', variant="primary")
-                        with gr.Column():
-                            with gr.Group():
-                                width = gr.Slider(512,
-                                                    960,
-                                                    step=64,
-                                                    value=960,
-                                                    label='width')
-                                height = gr.Slider(512,
-                                                    576,
-                                                    step=64,
-                                                    value=512,
-                                                    label='height')
-                                steps = gr.Slider(20,
-                                                    200,
-                                                    step=1,
-                                                    value=50,
-                                                    label='steps')
-                                scale = gr.Slider(1.0,
-                                                    20.0,
-                                                    step=0.5,
-                                                    value=7.5,
-                                                    label='scale')
-                                strength = gr.Slider(0.0,
-                                                        0.99,
-                                                        step=0.01,
-                                                        value=0.9,
-                                                        label='Weight of Prompt Text')
-                                seed = gr.Slider(0,
-                                                    1000,
-                                                    step=1,
-                                                    value=42,
-                                                    label='Seed')
-                                num_images = gr.Slider(1,
-                                                        9,
-                                                        step=1,
-                                                        value=4,
-                                                        label='Number of Images')
-
-                with gr.Column():
-                    with gr.Group():
-                        #translated_text = gr.Textbox(label='Translated Text')
-                        with gr.Tabs() as result_tabs_inpainting:
-                            with gr.TabItem('Gallery'):
-                                with gr.Group():
-                                    with gr.Row():
-                                        gr.Markdown('Once generation finished, select one image in Gallery and click \'Run HR\' to adapt super resolution')
-                                    with gr.Row():
-                                        hr_button = gr.Button('Run HR', variant="primary", visible=False)
-                                result_gallery = gr.Gallery(labels="Images", elem_id="sketch_outputs").style(grid=[2,2])
-                            with gr.TabItem('High Resolution', id='hr_tab'):
-                                with gr.TabItem('HR Image'):
-                                    hr_image = gr.Image(labels="HR Image", show_label=True)
-                                with gr.TabItem('v.s. Original Image'):
-                                    low_image = gr.Image(labels="Original Image", show_label=True)
-                            with gr.TabItem('Grid View'):
-                                result_grid = gr.Image(show_label=False)
-                run_button.click(fn=inpaint_predict,
-                                inputs=[
-                                    None if not init_img else init_img,
-                                    text_prompt,
-                                    width,
-                                    height,
-                                    steps,
-                                    scale,
-                                    strength,
-                                    seed,
-                                    num_images
-                                ],
-                                outputs=[
-                                    result_grid,
-                                    result_gallery,
-                                    hr_button
-                                ])
-                
-                hr_button.click(fn=SR_model.run,
-                                inputs=[result_gallery],
-                                outputs=[low_image, hr_image, result_tabs_inpainting],
-                                _js=call_JS("moveImageFromGallery",
-                                            fromId="sketch_outputs",
-                                            toId="hr_outputs")
-                                )
-                
             with gr.TabItem('Iterative Creation'):
                 with gr.Row():
                     with gr.Row():
@@ -575,12 +491,12 @@ def main():
                                                         0.99,
                                                         step=0.01,
                                                         value=0.9,
-                                                        label='Weight of Prompt Text')
+                                                        label='text weight')
                                 seed = gr.Slider(0,
                                                     1000,
                                                     step=1,
                                                     value=42,
-                                                    label='Seed')
+                                                    label='seed')
                                 num_images = gr.Slider(1,
                                                         9,
                                                         step=1,
@@ -602,49 +518,229 @@ def main():
                                     low_image = gr.Image(labels="Original Image", show_label=True)
                             with gr.TabItem('Grid View'):
                                 result_grid = gr.Image(show_label=False)
-            run_button.click(fn=multi2image_predict,
-                         inputs=[
-                             init_img,
-                             text_prompt,
-                             width,
-                             height,
-                             steps,
-                             scale,
-                             strength,
-                             seed,
-                             num_images
-                         ],
-                         outputs=[
-                             result_grid,
-                             result_gallery,
-                             run_button,
-                             confirm_button,
-                             hr_button
-                         ])
-        
-            confirm_button.click(fn=cp_one_image_from_gallery_to_original,
-                                inputs=[
-                                    result_gallery
-                                ],
-                                outputs=[
-                                    init_img,
-                                    run_button,
-                                    confirm_button,
-                                    hr_button
-                                ],
-                                _js=call_JS("moveImageFromGallery",
-                                            fromId="sd_outputs",
-                                            toId="input_img")
-                                )
+                run_button.click(fn=multi2image_predict,
+                            inputs=[
+                                init_img,
+                                text_prompt,
+                                width,
+                                height,
+                                steps,
+                                scale,
+                                strength,
+                                seed,
+                                num_images
+                            ],
+                            outputs=[
+                                result_grid,
+                                result_gallery,
+                                run_button,
+                                confirm_button,
+                                hr_button
+                            ])
             
-            hr_button.click(fn=SR_model.run,
+                confirm_button.click(fn=cp_one_image_from_gallery_to_original,
+                                    inputs=[
+                                        result_gallery
+                                    ],
+                                    outputs=[
+                                        init_img,
+                                        run_button,
+                                        confirm_button,
+                                        hr_button
+                                    ],
+                                    _js=call_JS("moveImageFromGallery",
+                                                fromId="sd_outputs",
+                                                toId="input_img")
+                                    )
+                
+                hr_button.click(fn=SR_model.run,
                                 inputs=[result_gallery],
                                 outputs=[low_image, hr_image, result_tabs_iteration],
                                 _js=call_JS("moveImageFromGallery",
                                             fromId="sd_outputs",
                                             toId="hr_outputs")
                                 ) 
+           
+            # with gr.TabItem('Image Inpainting'):
+            #     with gr.Row():
+            #         with gr.Row():
+            #             with gr.Column():
+            #                 with gr.Group():
+            #                     with gr.Tabs():
+            #                         with gr.TabItem('Image Prompt'):
+            #                             init_img = gr.Image(type="pil", label="Initial image here", tool='sketch')
+            #                         with gr.TabItem('Text Prompt'):
+            #                             text_prompt = gr.Textbox(lines=12, label='Input Text')
+            #                     with gr.Row():
+            #                         run_button = gr.Button('Run Generation', variant="primary")
+            #             with gr.Column():
+            #                 with gr.Group():
+            #                     width = gr.Slider(512,
+            #                                         960,
+            #                                         step=64,
+            #                                         value=960,
+            #                                         label='width')
+            #                     height = gr.Slider(512,
+            #                                         576,
+            #                                         step=64,
+            #                                         value=512,
+            #                                         label='height')
+            #                     steps = gr.Slider(20,
+            #                                         200,
+            #                                         step=1,
+            #                                         value=50,
+            #                                         label='steps')
+            #                     scale = gr.Slider(1.0,
+            #                                         20.0,
+            #                                         step=0.5,
+            #                                         value=7.5,
+            #                                         label='scale')
+            #                     strength = gr.Slider(0.0,
+            #                                             0.99,
+            #                                             step=0.01,
+            #                                             value=0.9,
+            #                                             label='text weight')
+            #                     seed = gr.Slider(0,
+            #                                         1000,
+            #                                         step=1,
+            #                                         value=42,
+            #                                         label='seed')
+            #                     num_images = gr.Slider(1,
+            #                                             9,
+            #                                             step=1,
+            #                                             value=4,
+            #                                             label='Number of Images')
+
+            #     with gr.Column():
+            #         with gr.Group():
+            #             #translated_text = gr.Textbox(label='Translated Text')
+            #             with gr.Tabs() as result_tabs_inpainting:
+            #                 with gr.TabItem('Gallery'):
+            #                     with gr.Group():
+            #                         with gr.Row():
+            #                             gr.Markdown('Once generation finished, select one image in Gallery and click \'Run HR\' to adapt super resolution')
+            #                         with gr.Row():
+            #                             hr_button = gr.Button('Run HR', variant="primary", visible=False)
+            #                     result_gallery = gr.Gallery(labels="Images", elem_id="sketch_outputs").style(grid=[2,2])
+            #                 with gr.TabItem('High Resolution', id='hr_tab'):
+            #                     with gr.TabItem('HR Image'):
+            #                         hr_image = gr.Image(labels="HR Image", show_label=True)
+            #                     with gr.TabItem('v.s. Original Image'):
+            #                         low_image = gr.Image(labels="Original Image", show_label=True)
+            #                 with gr.TabItem('Grid View'):
+            #                     result_grid = gr.Image(show_label=False)
+            #     run_button.click(fn=inpaint_predict,
+            #                     inputs=[
+            #                         None if not init_img else init_img,
+            #                         text_prompt,
+            #                         width,
+            #                         height,
+            #                         steps,
+            #                         scale,
+            #                         strength,
+            #                         seed,
+            #                         num_images
+            #                     ],
+            #                     outputs=[
+            #                         result_grid,
+            #                         result_gallery,
+            #                         hr_button
+            #                     ])
+                
+            #     hr_button.click(fn=SR_model.run,
+            #                     inputs=[result_gallery],
+            #                     outputs=[low_image, hr_image, result_tabs_inpainting],
+            #                     _js=call_JS("moveImageFromGallery",
+            #                                 fromId="sketch_outputs",
+            #                                 toId="hr_outputs")
+            #                     )
+                
+            with gr.TabItem('Image Inpainting'):
+                with gr.Row():
+                    with gr.Row():
+                        with gr.Column():
+                            with gr.Group():
+                                with gr.Tabs():
+                                    with gr.TabItem('Image Prompt'):
+                                        init_img = gr.Image(type="pil", label="Initial image with max side 960 here", tool='sketch')
+                                with gr.Row():
+                                    run_button = gr.Button('Run Generation', variant="primary")
+                                    confirm_button = gr.Button('Confirm', variant="primary", visible=False)
+                        with gr.Column():
+                            with gr.Tabs():
+                                with gr.TabItem('Text Prompt'):
+                                    text_prompt = gr.Textbox(lines=3, label='Input Text')
+                                
+                            with gr.Group():
+
+                                steps = gr.Slider(20,
+                                                    200,
+                                                    step=1,
+                                                    value=50,
+                                                    label='steps')
+                                scale = gr.Slider(1.0,
+                                                    20.0,
+                                                    step=0.5,
+                                                    value=7.5,
+                                                    label='scale')
+                                strength = gr.Slider(0.0,
+                                                        0.99,
+                                                        step=0.01,
+                                                        value=0.9,
+                                                        label='text weight')
+                                seed = gr.Slider(0,
+                                                    1000,
+                                                    step=1,
+                                                    value=42,
+                                                    label='seed')
+                with gr.Column():
+                    with gr.Group():
+                        with gr.Tabs() as result_tabs_outpainting:
+                            with gr.TabItem('Result'):
+                                with gr.Group():
+                                    with gr.Row():
+                                        confirm_button = gr.Button('Confirm', variant="primary", visible=False)
+                                        hr_button = gr.Button('Run HR', variant="primary", visible=False)
+                                result_image = gr.Image(show_label=False, interactive=False)   
+                            with gr.TabItem('High Resolution', id='hr_tab'):
+                                with gr.TabItem('HR Image'):
+                                    hr_image = gr.Image(labels="HR Image", show_label=True) 
+                                with gr.TabItem('v.s. Original Image'):
+                                    low_image = gr.Image(labels="Original Image", show_label=True)
             
+                run_button.click(fn=inpaint_predict,
+                            inputs=[
+                                None if not init_img else init_img,
+                                text_prompt,
+                                steps,
+                                scale,
+                                strength,
+                                seed
+                            ],
+                            outputs=[
+                                result_image,
+                                run_button,
+                                confirm_button,
+                                hr_button
+                            ])
+            
+                confirm_button.click(fn=cp_to_original,
+                                    inputs=[
+                                        result_image
+                                    ],
+                                    outputs=[
+                                        init_img,
+                                        run_button,
+                                        confirm_button,
+                                        hr_button
+                                    ]
+                                    )
+                
+                hr_button.click(fn=SR_model.run,
+                                    inputs=[result_image],
+                                    outputs=[low_image, hr_image, result_tabs_outpainting]
+                                    ) 
+                
             with gr.TabItem('Image Outpainting'):
                 with gr.Row():
                     with gr.Row():
@@ -652,13 +748,14 @@ def main():
                             with gr.Group():
                                 with gr.Tabs():
                                     with gr.TabItem('Image Prompt'):
-                                        init_img = gr.Image(type="pil", label="Initial image here")
-                                    with gr.TabItem('Text Prompt'):
-                                        text_prompt = gr.Textbox(lines=12, label='Input Text')
+                                        init_img = gr.Image(type="pil", label="Initial image with max side 960 here")
                                 with gr.Row():
                                     run_button = gr.Button('Run Generation', variant="primary")
                                     confirm_button = gr.Button('Confirm', variant="primary", visible=False)
                         with gr.Column():
+                            with gr.Tabs():
+                                with gr.TabItem('Text Prompt'):
+                                        text_prompt = gr.Textbox(lines=3, label='Input Text')
                             with gr.Group():
                                 direction = gr.Radio(
                                      choices=['left', 'right', 'top', 'bottom'],
@@ -684,12 +781,12 @@ def main():
                                                         0.99,
                                                         step=0.01,
                                                         value=0.9,
-                                                        label='Weight of Prompt Text')
+                                                        label='text weight')
                                 seed = gr.Slider(0,
                                                     1000,
                                                     step=1,
                                                     value=42,
-                                                    label='Seed')
+                                                    label='seed')
                 with gr.Column():
                     with gr.Group():
                         with gr.Tabs() as result_tabs_outpainting:
@@ -705,40 +802,40 @@ def main():
                                 with gr.TabItem('v.s. Original Image'):
                                     low_image = gr.Image(labels="Original Image", show_label=True)
             
-            run_button.click(fn=outpaint_predict,
-                         inputs=[
-                             init_img,
-                             text_prompt,
-                             direction,
-                             expand_lenth,
-                             steps,
-                             scale,
-                             strength,
-                             seed
-                         ],
-                         outputs=[
-                             result_image,
-                             run_button,
-                             confirm_button,
-                             hr_button
-                         ])
-        
-            confirm_button.click(fn=cp_to_original,
-                                inputs=[
-                                    result_image
-                                ],
-                                outputs=[
-                                    init_img,
-                                    run_button,
-                                    confirm_button,
-                                    hr_button
-                                ]
-                                )
+                run_button.click(fn=outpaint_predict,
+                            inputs=[
+                                init_img,
+                                text_prompt,
+                                direction,
+                                expand_lenth,
+                                steps,
+                                scale,
+                                strength,
+                                seed
+                            ],
+                            outputs=[
+                                result_image,
+                                run_button,
+                                confirm_button,
+                                hr_button
+                            ])
             
-            hr_button.click(fn=SR_model.run,
-                                inputs=[result_image],
-                                outputs=[low_image, hr_image, result_tabs_outpainting]
-                                ) 
+                confirm_button.click(fn=cp_to_original,
+                                    inputs=[
+                                        result_image
+                                    ],
+                                    outputs=[
+                                        init_img,
+                                        run_button,
+                                        confirm_button,
+                                        hr_button
+                                    ]
+                                    )
+                
+                hr_button.click(fn=SR_model.run,
+                                    inputs=[result_image],
+                                    outputs=[low_image, hr_image, result_tabs_outpainting]
+                                    ) 
 
 
         
@@ -766,7 +863,7 @@ def main():
         
     demo.launch(
         server_name="0.0.0.0",
-        server_port=8082,
+        server_port=7800,
         enable_queue=True,
         share=args.share,
     )
