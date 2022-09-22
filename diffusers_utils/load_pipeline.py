@@ -17,7 +17,7 @@ image2image_pipeline = StableDiffusionImg2ImgPipeline(
     tokenizer = paint_pipeline.tokenizer,
     unet = paint_pipeline.unet,
     scheduler = paint_pipeline.scheduler,
-    safety_checker = paint_pipeline.safety_checker,
+    # safety_checker = paint_pipeline.safety_checker,
     feature_extractor = paint_pipeline.feature_extractor,
 ).to(device)
 
@@ -27,7 +27,7 @@ text2image_pipeline = StableDiffusionPipeline(
     tokenizer = paint_pipeline.tokenizer,
     unet = paint_pipeline.unet,
     scheduler = paint_pipeline.scheduler,
-    safety_checker = paint_pipeline.safety_checker,
+    # safety_checker = paint_pipeline.safety_checker,
     feature_extractor = paint_pipeline.feature_extractor,
 ).to(device)
 print('finish loading the diffusers models')
