@@ -319,7 +319,7 @@ def main():
                             with gr.TabItem('Gallery'):
                                 with gr.Group():
                                     with gr.Row():
-                                        gr.Markdown('Once generation finished, select one image in Gallery and click \'Run HR\' to adapt super resolution')
+                                        gr.Markdown('Select one image in Gallery and click \'Run HR\' to adapt super resolution')
                                     with gr.Row():
                                         hr_button = gr.Button('Run HR', variant="primary", visible=False)
                                 result_gallery = gr.Gallery(labels="Images", elem_id="variance_outputs").style(grid=[2,2])
@@ -411,7 +411,7 @@ def main():
                             with gr.TabItem('Gallery'):
                                 with gr.Group():
                                     with gr.Row():
-                                        gr.Markdown('Once generation finished, select one image in Gallery and click \'Run HR\' to adapt super resolution')
+                                        gr.Markdown('Select one image in Gallery and click \'Run HR\' to adapt super resolution')
                                     with gr.Row():
                                         confrim_button = gr.Button(visible=False)
                                         hr_button = gr.Button('Run HR', variant="primary", visible=False)
@@ -618,7 +618,7 @@ def main():
             #                 with gr.TabItem('Gallery'):
             #                     with gr.Group():
             #                         with gr.Row():
-            #                             gr.Markdown('Once generation finished, select one image in Gallery and click \'Run HR\' to adapt super resolution')
+            #                             gr.Markdown('Select one image in Gallery and click \'Run HR\' to adapt super resolution')
             #                         with gr.Row():
             #                             hr_button = gr.Button('Run HR', variant="primary", visible=False)
             #                     result_gallery = gr.Gallery(labels="Images", elem_id="sketch_outputs").style(grid=[2,2])

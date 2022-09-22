@@ -39,7 +39,6 @@ def inpaint_predict(dict, prompt, steps=50, scale=7.5, strength=0.8, seed=42):
 def outpaint_predict(image, prompt, direction, expand_lenth, steps=50, scale=7.5, strength=0.8, seed=2022):
     gc.collect()
     torch.cuda.empty_cache()
-    # image = image.resize((512, 512))
     button_update_1 = gr.Button.update(value='Re-Run Generation')
     button_update_2 = gr.Button.update(visible=True)
     button_update_3 = gr.Button.update(visible=False)
