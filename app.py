@@ -863,7 +863,7 @@ def main():
         
     demo.launch(
         server_name="0.0.0.0",
-        server_port=7800,
+        server_port=8082,
         enable_queue=True,
         share=args.share,
     )

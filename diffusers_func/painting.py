@@ -133,6 +133,8 @@ def multi2image_predict(init_img, prompt, width, height, steps=50, scale=7.5, st
                 generator = torch.Generator("cuda").manual_seed(seed + i)
                 images = text2image_pipeline(prompt=prompt, height=height, width=width, num_inference_steps=steps, guidance_scale=scale, strength=strength, generator=generator)["sample"]
                 result_images.append(images[0])
+                torch.cuda.empty_cache()
+                
     
     grids = image_grid(result_images, num_images)
 
