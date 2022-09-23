@@ -2,6 +2,7 @@ from pickle import NONE
 from diffusers import StableDiffusionInpaintPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionPipeline
 from transformers import BertTokenizer, BertForSequenceClassification
 import torch
+import gc
 
 device = "cuda:6"
 
@@ -50,5 +51,8 @@ text2image_pipeline = StableDiffusionPipeline(
     feature_extractor = paint_pipeline.feature_extractor,
 ).to(device)
 
-# torch.cuda.empty_cache()
+gc.collect()
+torch.cuda.empty_cache()
+torch.cuda.ipc_collect()
+
 print('finish loading the diffusers models')

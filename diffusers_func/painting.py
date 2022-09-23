@@ -17,6 +17,7 @@ import gradio as gr
 def inpaint_predict(dict, prompt, steps=50, scale=7.5, strength=0.8, seed=42):
     gc.collect()
     torch.cuda.empty_cache()
+    torch.cuda.ipc_collect()
     button_update_1 = gr.Button.update(value='Re-Run Generation')
     button_update_2 = gr.Button.update(visible=True)
     button_update_3 = gr.Button.update(visible=False)
@@ -39,6 +40,8 @@ def inpaint_predict(dict, prompt, steps=50, scale=7.5, strength=0.8, seed=42):
 def outpaint_predict(image, prompt, direction, expand_lenth, steps=50, scale=7.5, strength=0.8, seed=2022):
     gc.collect()
     torch.cuda.empty_cache()
+    torch.cuda.ipc_collect()
+    
     button_update_1 = gr.Button.update(value='Re-Run Generation')
     button_update_2 = gr.Button.update(visible=True)
     button_update_3 = gr.Button.update(visible=False)
@@ -115,6 +118,8 @@ def outpaint_predict(image, prompt, direction, expand_lenth, steps=50, scale=7.5
 def multi2image_predict(init_img, prompt, width, height, steps=50, scale=7.5, strength=0.8, seed=2022, num_images=9):
     gc.collect()
     torch.cuda.empty_cache()
+    torch.cuda.ipc_collect()
+    
     button_update_1 = gr.Button.update(value='Re-Run Generation')
     button_update_2 = gr.Button.update(visible=True)
     button_update_3 = gr.Button.update(visible=False)
@@ -133,7 +138,6 @@ def multi2image_predict(init_img, prompt, width, height, steps=50, scale=7.5, st
                 generator = torch.Generator("cuda").manual_seed(seed + i)
                 images = text2image_pipeline(prompt=prompt, height=height, width=width, num_inference_steps=steps, guidance_scale=scale, strength=strength, generator=generator)["sample"]
                 result_images.append(images[0])
-                torch.cuda.empty_cache()
                 
     
     grids = image_grid(result_images, num_images)
@@ -157,6 +161,8 @@ def text2image_predict(prompt, fixed_size=512, num_images=9, seed=2022):
 def variance_predict(prompt, width, height, steps=50, scale=7.5, strength=0.8, seed=2022, num_images=9):
     gc.collect()
     torch.cuda.empty_cache()
+    torch.cuda.ipc_collect()
+    
     button_update = gr.Button.update(visible=True)
     result_images = []
     with autocast("cuda"):

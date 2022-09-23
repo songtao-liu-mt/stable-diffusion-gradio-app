@@ -4,6 +4,7 @@ from io import BytesIO
 import base64
 import gradio as gr
 import math
+import torch
 
 
 class GaussianBlur(ImageFilter.Filter):
