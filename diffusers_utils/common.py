@@ -45,7 +45,7 @@ def deal_width_exceed_maxside(image):
             new_w = int(new_h / h * w)
         image = image.resize((new_w, new_h), resample=Image.LANCZOS)
     w, h = image.size
-    w, h = map(lambda x: x - x % 96, (w, h))  # resize to integer multiple of 32
+    w, h = map(lambda x: x - x % 64, (w, h))  # resize to integer multiple of 32
     image = image.resize((w, h), resample=Image.LANCZOS)
     return image
 
