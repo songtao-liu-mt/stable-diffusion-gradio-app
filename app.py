@@ -21,8 +21,8 @@ __dir__ = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(__dir__)
 from diffusers_func import inpaint_predict, outpaint_predict, multi2image_predict, text2image_predict, variance_predict
 
-DESCRIPTION = '''# Text to Image New Version with Stable Diffusion
-Note: This application accepts ONLY English as input.
+DESCRIPTION = '''# 马良 AIGC 创作平台
+注意: 此应用目前只支持英文输入
 '''
 
 RealESRGAN_dir = 'models/realesrgan'
@@ -85,7 +85,7 @@ def cp_one_image_from_gallery_to_original(img):
     try:
         image_data = re.sub('^data:image/.+;base64,', '', img)
         processed_image = Image.open(BytesIO(base64.b64decode(image_data)))
-        button_update_1 = gr.Button.update(value='Run Generation')
+        button_update_1 = gr.Button.update(value='运行生成')
         button_update_2 = gr.Button.update(visible=False)
         button_update_3 = gr.Button.update(visible=True)
         return processed_image, button_update_1, button_update_2, button_update_3
@@ -95,7 +95,7 @@ def cp_one_image_from_gallery_to_original(img):
 
 def cp_to_original(img):
     try:
-        button_update_1 = gr.Button.update(value='Run Generation')
+        button_update_1 = gr.Button.update(value='运行生成')
         button_update_2 = gr.Button.update(visible=False)
         button_update_3 = gr.Button.update(visible=True)
         return img, button_update_1, button_update_2, button_update_3
@@ -104,7 +104,7 @@ def cp_to_original(img):
     
 def cp_to_original_inpaint(img):
     try:
-        button_update_1 = gr.Button.update(value='Run Generation')
+        button_update_1 = gr.Button.update(value='运行生成')
         button_update_2 = gr.Button.update(visible=False)
         button_update_3 = gr.Button.update(visible=True)
         result_img = gr.Image.update(value=img)
@@ -113,7 +113,7 @@ def cp_to_original_inpaint(img):
         return [None] * 4
     
 def change_status():
-    return gr.Text.update(value="Re-Run")   
+    return gr.Text.update(value="重新生成")   
 class RealESGAN_warp:
     def __init__(self, model):
         self.model = model
@@ -145,80 +145,80 @@ def main():
     with gr.Blocks(css='style.css') as demo:
         gr.Markdown(DESCRIPTION)
         with gr.Tabs() as tabs:
-            with gr.TabItem('Stable Dissusion Generation'):
+            with gr.TabItem('马良生成'):
                 with gr.Row():
                     with gr.Row():
                         with gr.Column():
                             with gr.Group():
                                 with gr.Tabs():
-                                    with gr.TabItem('Text Prompt'):
+                                    with gr.TabItem('文本输入'):
                                         text_prompt = gr.Textbox(value="A fantasy landscape, trending on artstation.",
-                                                            lines=12, label='Input Text')
-                                    with gr.TabItem('Image Prompt'):
-                                        init_img = gr.Image(type="pil", label="Initial image here")
+                                                            lines=12, label='输入文本')
+                                    with gr.TabItem('图像输入'):
+                                        init_img = gr.Image(type="pil", label="初始图像")
                                         gr.Examples(
                                             examples = [os.path.join(os.path.dirname(__file__), "assets/stable-samples/img2img/sketch-mountains-input.jpg"),
                                                         os.path.join(os.path.dirname(__file__), "assets/logo.jpeg")],
                                             inputs = init_img,
                                         )
                                 with gr.Row():
-                                    run_button = gr.Button('Run Generation', variant="primary")
+                                    run_button = gr.Button('运行生成', variant="primary")
                         with gr.Column():
                             with gr.Group():
                                 width = gr.Slider(512,
                                                     960,
                                                     step=64,
                                                     value=960,
-                                                    label='width')
+                                                    label='图像宽度')
                                 height = gr.Slider(512,
                                                     576,
                                                     step=64,
                                                     value=512,
-                                                    label='height')
+                                                    label='图像高度')
                                 steps = gr.Slider(20,
                                                     200,
                                                     step=1,
                                                     value=50,
-                                                    label='steps')
+                                                    label='步数')
                                 scale = gr.Slider(1.0,
                                                     20.0,
                                                     step=0.5,
                                                     value=7.5,
-                                                    label='scale')
+                                                    label='尺度')
                                 strength = gr.Slider(0.0,
                                                         0.99,
                                                         step=0.01,
                                                         value=0.9,
-                                                        label='text weight')
+                                                        label='文本权重')
                                 seed = gr.Slider(0,
                                                     1000,
                                                     step=1,
                                                     value=42,
-                                                    label='seed')
+                                                    label='种子数')
                                 num_images = gr.Slider(1,
                                                         9,
                                                         step=1,
                                                         value=4,
-                                                        label='Number of Images')
+                                                        label='图像数量')
 
                 with gr.Column():
                     with gr.Group():
                         #translated_text = gr.Textbox(label='Translated Text')
                         with gr.Tabs() as result_tabs_sd:
-                            with gr.TabItem('Gallery'):
+                            with gr.TabItem('结果预览'):
                                 with gr.Group():
                                     with gr.Row():
-                                        gr.Markdown('Select one image in Gallery and click \'Run HR\' to adapt super resolution')
+                                        gr.Markdown('选择一张图片并点击 “超分” 生成高清图像')
                                     with gr.Row():
                                         confirm_button = gr.Button(visible=False)
-                                        hr_button = gr.Button('Run HR', variant="primary", visible=False)
+                                        hr_button = gr.Button('生成高清图像', variant="primary", visible=False)
                                 result_gallery = gr.Gallery(labels="Images", elem_id="sd_outputs",).style(grid=[2,2])
-                            with gr.TabItem('High Resolution', id='hr_tab'):
-                                with gr.TabItem('HR Image'):
-                                    hr_image = gr.Image(labels="HR Image", show_label=True,)
-                                with gr.TabItem('v.s. Original Image'):
-                                    low_image = gr.Image(labels="Original Image", show_label=True)
-                            with gr.TabItem('Grid View'):
+                            with gr.TabItem('超分辨率', id='hr_tab'):
+                                with gr.TabItem('高清图像'):
+                                    hr_image = gr.Image(labels="高清图像", show_label=True,)
+                                with gr.TabItem('v.s. 原图'):
+                                    low_image = gr.Image(labels="原图", show_label=True)
+                            with gr.TabItem('网格展示'):
                                 result_grid = gr.Image(show_label=False)
                 run_button.click(fn=multi2image_predict,
                                 inputs=[
@@ -260,7 +260,7 @@ def main():
                 #                             toId="sr_input")
                 #                 )
         
-            with gr.TabItem('Images Variance'):
+            with gr.TabItem('相似生成'):
                 with gr.Row():
                     with gr.Row():
                         with gr.Column():
@@ -268,11 +268,11 @@ def main():
                                 
                                     
                                 with gr.Tabs():
-                                    with gr.TabItem('Text Prompt'):
+                                    with gr.TabItem('文本输入'):
                                         text_prompt = gr.Textbox(value="A fantasy landscape, trending on artstation.",
-                                                            lines=12, label='Input Text')
+                                                            lines=12, label='输入文本')
                                 with gr.Row():
-                                    run_button = gr.Button('Run Generation', variant="primary")
+                                    run_button = gr.Button('运行生成', variant="primary")
                                 
                         with gr.Column():
                             with gr.Group():
@@ -280,55 +280,55 @@ def main():
                                                     960,
                                                     step=64,
                                                     value=960,
-                                                    label='width')
+                                                    label='图像宽度')
                                 height = gr.Slider(512,
                                                     576,
                                                     step=64,
                                                     value=512,
-                                                    label='height')
+                                                    label='图像高度')
                                 steps = gr.Slider(20,
                                                     200,
                                                     step=1,
                                                     value=50,
-                                                    label='steps')
+                                                    label='步数')
                                 scale = gr.Slider(1.0,
                                                     20.0,
                                                     step=0.5,
                                                     value=7.5,
-                                                    label='scale')
+                                                    label='尺度')
                                 strength = gr.Slider(0.0,
                                                         0.99,
                                                         step=0.01,
                                                         value=0.9,
-                                                        label='strength')
+                                                        label='强度')
                                 seed = gr.Slider(0,
                                                     1000,
                                                     step=1,
                                                     value=42,
-                                                    label='seed')
+                                                    label='种子数')
                                 num_images = gr.Slider(1,
                                                         9,
                                                         step=1,
                                                         value=4,
-                                                        label='Number of Images')   
+                                                        label='图像数量')   
                 with gr.Column():
                     with gr.Group():
                         #translated_text = gr.Textbox(label='Translated Text')
                         with gr.Tabs() as result_tabs_variance:
                             
-                            with gr.TabItem('Gallery'):
+                            with gr.TabItem('结果预览'):
                                 with gr.Group():
                                     with gr.Row():
-                                        gr.Markdown('Select one image in Gallery and click \'Run HR\' to adapt super resolution')
+                                        gr.Markdown('选择一张图片并点击 “超分” 生成高清图像')
                                     with gr.Row():
-                                        hr_button = gr.Button('Run HR', variant="primary", visible=False)
+                                        hr_button = gr.Button('生成高清图像', variant="primary", visible=False)
                                 result_gallery = gr.Gallery(labels="Images", elem_id="variance_outputs").style(grid=[2,2])
-                            with gr.TabItem('High Resolution', id='hr_tab'):
-                                with gr.TabItem('HR Image'):
-                                    hr_image = gr.Image(labels="HR Image", show_label=True)
-                                with gr.TabItem('v.s. Original Image'):
-                                    low_image = gr.Image(labels="Original Image", show_label=True)
-                            with gr.TabItem('Grid View'):
+                            with gr.TabItem('超分辨率', id='hr_tab'):
+                                with gr.TabItem('高清图像'):
+                                    hr_image = gr.Image(labels="高清图像", show_label=True)
+                                with gr.TabItem('v.s. 原图'):
+                                    low_image = gr.Image(labels="原图", show_label=True)
+                            with gr.TabItem('网格展示'):
                                 result_grid = gr.Image(show_label=False)
                 run_button.click(fn=variance_predict,
                                 inputs=[
@@ -354,74 +354,74 @@ def main():
                                             toId="hr_outputs")
                                 )                       
             
-            with gr.TabItem('Image Sketch'):
+            with gr.TabItem('简笔画'):
                 with gr.Row():
                     with gr.Row():
                         with gr.Column():
                             with gr.Group():
                                 with gr.Tabs():
-                                    with gr.TabItem('Image Prompt'):
-                                        init_img = gr.Image(type="pil", label="Initial image here", source="canvas")
-                                    with gr.TabItem('Text Prompt'):
-                                        text_prompt = gr.Textbox(lines=12, label='Input Text')
+                                    with gr.TabItem('图像输入'):
+                                        init_img = gr.Image(type="pil", label="初始图像", source="canvas")
+                                    with gr.TabItem('文本输入'):
+                                        text_prompt = gr.Textbox(lines=12, label='输入文本')
                                 with gr.Row():
-                                    run_button = gr.Button('Run Generation', variant="primary")
+                                    run_button = gr.Button('运行生成', variant="primary")
                         with gr.Column():
                             with gr.Group():
                                 width = gr.Slider(512,
                                                     960,
                                                     step=64,
                                                     value=960,
-                                                    label='width')
+                                                    label='图像宽度')
                                 height = gr.Slider(512,
                                                     576,
                                                     step=64,
                                                     value=512,
-                                                    label='height')
+                                                    label='图像高度')
                                 steps = gr.Slider(20,
                                                     200,
                                                     step=1,
                                                     value=50,
-                                                    label='steps')
+                                                    label='步数')
                                 scale = gr.Slider(1.0,
                                                     20.0,
                                                     step=0.5,
                                                     value=7.5,
-                                                    label='scale')
+                                                    label='尺度')
                                 strength = gr.Slider(0.0,
                                                         0.99,
                                                         step=0.01,
                                                         value=0.9,
-                                                        label='text weight')
+                                                        label='文本权重')
                                 seed = gr.Slider(0,
                                                     1000,
                                                     step=1,
                                                     value=42,
-                                                    label='seed')
+                                                    label='种子数')
                                 num_images = gr.Slider(1,
                                                         9,
                                                         step=1,
                                                         value=4,
-                                                        label='Number of Images')
+                                                        label='图像数量')
 
                 with gr.Column():
                     with gr.Group():
                         #translated_text = gr.Textbox(label='Translated Text')
                         with gr.Tabs() as result_tabs_sketch:
-                            with gr.TabItem('Gallery'):
+                            with gr.TabItem('结果预览'):
                                 with gr.Group():
                                     with gr.Row():
-                                        gr.Markdown('Select one image in Gallery and click \'Run HR\' to adapt super resolution')
+                                        gr.Markdown('选择一张图片并点击 “超分” 生成高清图像')
                                     with gr.Row():
                                         confrim_button = gr.Button(visible=False)
-                                        hr_button = gr.Button('Run HR', variant="primary", visible=False)
+                                        hr_button = gr.Button('生成高清图像', variant="primary", visible=False)
                                 result_gallery = gr.Gallery(labels="Images", elem_id="sketch_outputs").style(grid=[2,2])
-                            with gr.TabItem('High Resolution', id='hr_tab'):
-                                with gr.TabItem('HR Image'):
-                                    hr_image = gr.Image(labels="HR Image", show_label=True)
-                                with gr.TabItem('v.s. Original Image'):
-                                    low_image = gr.Image(labels="Original Image", show_label=True)
-                            with gr.TabItem('Grid View'):
+                            with gr.TabItem('超分辨率', id='hr_tab'):
+                                with gr.TabItem('高清图像'):
+                                    hr_image = gr.Image(labels="高清图像", show_label=True)
+                                with gr.TabItem('v.s. 原图'):
+                                    low_image = gr.Image(labels="原图", show_label=True)
+                            with gr.TabItem('网格展示'):
                                 result_grid = gr.Image(show_label=False)
                 run_button.click(fn=multi2image_predict,
                                 inputs=[
@@ -451,19 +451,19 @@ def main():
                                             toId="hr_outputs")
                                 )
         
-            with gr.TabItem('Iterative Creation'):
+            with gr.TabItem('迭代创作'):
                 with gr.Row():
                     with gr.Row():
                         with gr.Column():
                             with gr.Group():
                                 with gr.Tabs():
-                                    with gr.TabItem('Image Prompt'):
-                                        init_img = gr.Image(type="pil", label="Initial image here", id='input_img')
-                                    with gr.TabItem('Text Prompt'):
-                                        text_prompt = gr.Textbox(lines=12, label='Input Text')
+                                    with gr.TabItem('图像输入'):
+                                        init_img = gr.Image(type="pil", label="初始图像", id='input_img')
+                                    with gr.TabItem('文本输入'):
+                                        text_prompt = gr.Textbox(lines=12, label='输入文本')
                                 with gr.Row():
-                                    run_button = gr.Button('Run Generation', variant="primary")
-                                    confirm_button = gr.Button('Confirm', variant="primary", visible=False)
+                                    run_button = gr.Button('运行生成', variant="primary")
+                                    confirm_button = gr.Button('确认', variant="primary", visible=False)
                         with gr.Column():
                             with gr.Group():
                                 
@@ -471,52 +471,52 @@ def main():
                                                     960,
                                                     step=64,
                                                     value=512,
-                                                    label='width')
+                                                    label='图像宽度')
                                 height = gr.Slider(512,
                                                     576,
                                                     step=64,
                                                     value=512,
-                                                    label='height')
+                                                    label='图像高度')
                                 steps = gr.Slider(20,
                                                     200,
                                                     step=1,
                                                     value=50,
-                                                    label='steps')
+                                                    label='步数')
                                 scale = gr.Slider(1.0,
                                                     20.0,
                                                     step=0.5,
                                                     value=7.5,
-                                                    label='scale')
+                                                    label='尺度')
                                 strength = gr.Slider(0.0,
                                                         0.99,
                                                         step=0.01,
                                                         value=0.9,
-                                                        label='text weight')
+                                                        label='文本权重')
                                 seed = gr.Slider(0,
                                                     1000,
                                                     step=1,
                                                     value=42,
-                                                    label='seed')
+                                                    label='种子数')
                                 num_images = gr.Slider(1,
                                                         9,
                                                         step=1,
                                                         value=9,
-                                                        label='Number of Images')
+                                                        label='图像数量')
                 with gr.Column():
                     with gr.Group():
                         with gr.Tabs() as result_tabs_iteration:
-                            with gr.TabItem('Result'):
+                            with gr.TabItem('生成结果'):
                                 with gr.Group():
                                     with gr.Row():
-                                        confirm_button = gr.Button('Select', variant="primary", visible=False)
-                                        hr_button = gr.Button('Run HR', variant="primary", visible=False) 
+                                        confirm_button = gr.Button('选择', variant="primary", visible=False)
+                                        hr_button = gr.Button('生成高清图像', variant="primary", visible=False) 
                                 result_gallery = gr.Gallery(labels="Images", elem_id="sd_outputs").style(grid=[3,3])
-                            with gr.TabItem('High Resolution', id='hr_tab'):
-                                with gr.TabItem('HR Image'):
-                                    hr_image = gr.Image(labels="HR Image", show_label=True, id='hr_outputs') 
-                                with gr.TabItem('v.s. Original Image'):
-                                    low_image = gr.Image(labels="Original Image", show_label=True)
-                            with gr.TabItem('Grid View'):
+                            with gr.TabItem('超分辨率', id='hr_tab'):
+                                with gr.TabItem('高清图像'):
+                                    hr_image = gr.Image(labels="高清图像", show_label=True, id='hr_outputs') 
+                                with gr.TabItem('v.s. 原图'):
+                                    low_image = gr.Image(labels="原图", show_label=True)
+                            with gr.TabItem('网格展示'):
                                 result_grid = gr.Image(show_label=False)
                 run_button.click(fn=multi2image_predict,
                             inputs=[
@@ -561,81 +561,70 @@ def main():
                                             toId="hr_outputs")
                                 ) 
            
-            with gr.TabItem('Image Inpainting'):
+            with gr.TabItem('局部编辑'):
                 with gr.Row():
                     with gr.Row():
                         with gr.Column():
                             with gr.Group():
                                 with gr.Tabs():
-                                    with gr.TabItem('Image Prompt'):
-                                        init_img = gr.Image(type="pil", label="Initial image here", tool='sketch')
-                                    with gr.TabItem('Text Prompt'):
-                                        text_prompt = gr.Textbox(lines=12, label='Input Text')
+                                    with gr.TabItem('图像输入'):
+                                        init_img = gr.Image(type="pil", label="初始图像最大边 768", tool='sketch')
+                                    with gr.TabItem('文本输入'):
+                                        text_prompt = gr.Textbox(lines=12, label='输入文本')
                                 with gr.Row():
-                                    run_button = gr.Button('Run Generation', variant="primary")
+                                    run_button = gr.Button('运行生成', variant="primary")
                         with gr.Column():
                             with gr.Group():
-                                width = gr.Slider(512,
-                                                    960,
-                                                    step=64,
-                                                    value=512,
-                                                    label='width')
-                                height = gr.Slider(512,
-                                                    576,
-                                                    step=64,
-                                                    value=512,
-                                                    label='height')
+
                                 steps = gr.Slider(20,
                                                     200,
                                                     step=1,
                                                     value=50,
-                                                    label='steps')
+                                                    label='步数')
                                 scale = gr.Slider(1.0,
                                                     20.0,
                                                     step=0.5,
                                                     value=7.5,
-                                                    label='scale')
+                                                    label='尺度')
                                 strength = gr.Slider(0.0,
                                                         0.99,
                                                         step=0.01,
                                                         value=0.9,
-                                                        label='text weight')
+                                                        label='文本权重')
                                 seed = gr.Slider(0,
                                                     1000,
                                                     step=1,
                                                     value=42,
-                                                    label='seed')
+                                                    label='种子数')
                                 num_images = gr.Slider(1,
                                                         9,
                                                         step=1,
                                                         value=4,
-                                                        label='Number of Images')
+                                                        label='图像数量')
 
                 with gr.Column():
                     with gr.Group():
                         #translated_text = gr.Textbox(label='Translated Text')
                         with gr.Tabs() as result_tabs_iteration:
-                            with gr.TabItem('Result'):
+                            with gr.TabItem('生成结果'):
                                 with gr.Group():
                                     with gr.Row():
-                                        gr.Markdown('Select one image in Gallery and click \'Run HR\' to adapt super resolution')
+                                        gr.Markdown('选择一张图片并点击 “超分” 生成高清图像')
                                     with gr.Row():
-                                        confirm_button = gr.Button('Select', variant="primary", visible=False)
-                                        hr_button = gr.Button('Run HR', variant="primary", visible=False)
+                                        confirm_button = gr.Button('选择', variant="primary", visible=False)
+                                        hr_button = gr.Button('生成高清图像', variant="primary", visible=False)
                                 result_gallery = gr.Gallery(labels="Images", elem_id="inpaiting_outputs").style(grid=[2,2])
-                            with gr.TabItem('High Resolution', id='hr_tab'):
-                                with gr.TabItem('HR Image'):
-                                    hr_image = gr.Image(labels="HR Image", show_label=True)
-                                with gr.TabItem('v.s. Original Image'):
-                                    low_image = gr.Image(labels="Original Image", show_label=True)
-                            with gr.TabItem('Grid View'):
+                            with gr.TabItem('超分辨率', id='hr_tab'):
+                                with gr.TabItem('高清图像'):
+                                    hr_image = gr.Image(labels="高清图像", show_label=True)
+                                with gr.TabItem('v.s. 原图'):
+                                    low_image = gr.Image(labels="原图", show_label=True)
+                            with gr.TabItem('网格展示'):
                                 result_grid = gr.Image(show_label=False)
                 run_button.click(fn=inpaint_predict,
                                 inputs=[
                                     None if not init_img else init_img,
                                     text_prompt,
-                                    width,
-                                    height,
                                     steps,
                                     scale,
                                     strength,
@@ -673,21 +662,21 @@ def main():
                                             toId="hr_outputs")
                                 ) 
                 
-            # with gr.TabItem('Image Inpainting'):
+            # with gr.TabItem('局部编辑'):
             #     with gr.Row():
             #         with gr.Row():
             #             with gr.Column():
             #                 with gr.Group():
             #                     with gr.Tabs():
-            #                         with gr.TabItem('Image Prompt'):
-            #                             init_img = gr.Image(type="pil", label="Initial image with max side 960 here", tool='sketch')
+            #                         with gr.TabItem('图像输入'):
+            #                             init_img = gr.Image(type="pil", label="初始图像最大边 768", tool='sketch')
             #                     with gr.Row():
-            #                         run_button = gr.Button('Run Generation', variant="primary")
-            #                         confirm_button = gr.Button('Confirm', variant="primary", visible=False)
+            #                         run_button = gr.Button('运行生成', variant="primary")
+            #                         confirm_button = gr.Button('确认', variant="primary", visible=False)
             #             with gr.Column():
             #                 with gr.Tabs():
-            #                     with gr.TabItem('Text Prompt'):
-            #                         text_prompt = gr.Textbox(lines=3, label='Input Text')
+            #                     with gr.TabItem('文本输入'):
+            #                         text_prompt = gr.Textbox(lines=3, label='输入文本')
                                 
             #                 with gr.Group():
 
@@ -695,36 +684,36 @@ def main():
             #                                         200,
             #                                         step=1,
             #                                         value=50,
-            #                                         label='steps')
+            #                                         label='步数')
             #                     scale = gr.Slider(1.0,
             #                                         20.0,
             #                                         step=0.5,
             #                                         value=7.5,
-            #                                         label='scale')
+            #                                         label='尺度')
             #                     strength = gr.Slider(0.0,
             #                                             0.99,
             #                                             step=0.01,
             #                                             value=0.9,
-            #                                             label='text weight')
+            #                                             label='文本权重')
             #                     seed = gr.Slider(0,
             #                                         1000,
             #                                         step=1,
             #                                         value=42,
-            #                                         label='seed')
+            #                                         label='种子数')
             #     with gr.Column():
             #         with gr.Group():
             #             with gr.Tabs() as result_tabs_outpainting:
-            #                 with gr.TabItem('Result'):
+            #                 with gr.TabItem('生成结果'):
             #                     with gr.Group():
             #                         with gr.Row():
-            #                             confirm_button = gr.Button('Confirm', variant="primary", visible=False)
-            #                             hr_button = gr.Button('Run HR', variant="primary", visible=False)
+            #                             confirm_button = gr.Button('确认', variant="primary", visible=False)
+            #                             hr_button = gr.Button('生成高清图像', variant="primary", visible=False)
             #                     result_image = gr.Image(show_label=False, interactive=False)   
-            #                 with gr.TabItem('High Resolution', id='hr_tab'):
-            #                     with gr.TabItem('HR Image'):
-            #                         hr_image = gr.Image(labels="HR Image", show_label=True) 
-            #                     with gr.TabItem('v.s. Original Image'):
-            #                         low_image = gr.Image(labels="Original Image", show_label=True)
+            #                 with gr.TabItem('超分辨率', id='hr_tab'):
+            #                     with gr.TabItem('高清图像'):
+            #                         hr_image = gr.Image(labels="高清图像", show_label=True) 
+            #                     with gr.TabItem('v.s. 原图'):
+            #                         low_image = gr.Image(labels="原图", show_label=True)
             
             #     run_button.click(fn=inpaint_predict,
             #                 inputs=[
@@ -759,26 +748,26 @@ def main():
             #                         outputs=[low_image, hr_image, result_tabs_outpainting]
             #                         ) 
                 
-            with gr.TabItem('Image Outpainting'):
+            with gr.TabItem('边缘扩展'):
                 with gr.Row():
                     with gr.Row():
                         with gr.Column():
                             with gr.Group():
                                 with gr.Tabs():
-                                    with gr.TabItem('Image Prompt'):
-                                        init_img = gr.Image(type="pil", label="Initial image with max side 960 here")
+                                    with gr.TabItem('图像输入'):
+                                        init_img = gr.Image(type="pil", label="初始图像最大边 768")
                                 with gr.Row():
-                                    run_button = gr.Button('Run Generation', variant="primary")
-                                    confirm_button = gr.Button('Confirm', variant="primary", visible=False)
+                                    run_button = gr.Button('运行生成', variant="primary")
+                                    confirm_button = gr.Button('确认', variant="primary", visible=False)
                         with gr.Column():
                             with gr.Tabs():
-                                with gr.TabItem('Text Prompt'):
-                                        text_prompt = gr.Textbox(lines=3, label='Input Text')
+                                with gr.TabItem('文本输入'):
+                                        text_prompt = gr.Textbox(lines=3, label='输入文本')
                             with gr.Group():
                                 direction = gr.Radio(
-                                     choices=['left', 'right', 'top', 'bottom'],
-                                     value='left', 
-                                     label="Please Select the Outpainting Direction"
+                                     choices=['左', '右', '上', '下'],
+                                     value='左', 
+                                     label="请选择一个扩展方向"
                                      )
                                 expand_lenth = gr.Slider(
                                     0, 
@@ -789,36 +778,36 @@ def main():
                                                     200,
                                                     step=1,
                                                     value=50,
-                                                    label='steps')
+                                                    label='步数')
                                 scale = gr.Slider(1.0,
                                                     20.0,
                                                     step=0.5,
                                                     value=7.5,
-                                                    label='scale')
+                                                    label='尺度')
                                 strength = gr.Slider(0.0,
                                                         0.99,
                                                         step=0.01,
                                                         value=0.9,
-                                                        label='text weight')
+                                                        label='文本权重')
                                 seed = gr.Slider(0,
                                                     1000,
                                                     step=1,
                                                     value=42,
-                                                    label='seed')
+                                                    label='种子数')
                 with gr.Column():
                     with gr.Group():
                         with gr.Tabs() as result_tabs_outpainting:
-                            with gr.TabItem('Result'):
+                            with gr.TabItem('生成结果'):
                                 with gr.Group():
                                     with gr.Row():
-                                        confirm_button = gr.Button('Confirm', variant="primary", visible=False)
-                                        hr_button = gr.Button('Run HR', variant="primary", visible=False)
+                                        confirm_button = gr.Button('确认', variant="primary", visible=False)
+                                        hr_button = gr.Button('生成高清图像', variant="primary", visible=False)
                                 result_image = gr.Image(show_label=False, interactive=False)   
-                            with gr.TabItem('High Resolution', id='hr_tab'):
-                                with gr.TabItem('HR Image'):
-                                    hr_image = gr.Image(labels="HR Image", show_label=True) 
-                                with gr.TabItem('v.s. Original Image'):
-                                    low_image = gr.Image(labels="Original Image", show_label=True)
+                            with gr.TabItem('超分辨率', id='hr_tab'):
+                                with gr.TabItem('高清图像'):
+                                    hr_image = gr.Image(labels="高清图像", show_label=True) 
+                                with gr.TabItem('v.s. 原图'):
+                                    low_image = gr.Image(labels="原图", show_label=True)
             
                 run_button.click(fn=outpaint_predict,
                             inputs=[
@@ -860,15 +849,15 @@ def main():
 
         
         
-            with gr.TabItem('Super Resolution', id="sr_tab"):
+            with gr.TabItem('超分辨率', id="sr_tab"):
                     with gr.Column():
                         SR_input_img = gr.Image(type="pil", label="SR input image here", elem_id="sr_input")
                         SR_button = gr.Button('Run SR', variant="primary")
                     with gr.Column():
                         with gr.Tabs() as result_tabs_hr:
-                            with gr.TabItem('HR Image', id='hr_tab'):
+                            with gr.TabItem('高清图像', id='hr_tab'):
                                 SR_result = gr.Image(show_label=False)
-                            with gr.TabItem('v.s. Original Image'):
+                            with gr.TabItem('v.s. 原图'):
                                 low_image = gr.Image(show_label=False)
                                 
     
