@@ -14,61 +14,61 @@ import gc
 from diffusers_utils import paint_pipeline, image2image_pipeline, text2image_pipeline, deal_width_exceed_maxside, image_grid, GaussianBlur, device, MAX_SIDE
 import gradio as gr
 
-# def inpaint_predict(dict, prompt, steps=50, scale=7.5, strength=0.8, seed=42):
-#     gc.collect()
-#     torch.cuda.empty_cache()
-#     torch.cuda.ipc_collect()
-#     button_update_1 = gr.Button.update(value='重新生成')
-#     button_update_2 = gr.Button.update(visible=True)
-#     button_update_3 = gr.Button.update(visible=False)
-    
-#     init_img = dict['image'].convert("RGB")
-#     mask_img = dict['mask'].convert("RGB")
-#     init_img = deal_width_exceed_maxside(init_img)
-#     mask_img = deal_width_exceed_maxside(mask_img)
-#     w, h = init_img.size
-    
-#     with autocast("cuda"):
-#         generator = torch.Generator("cuda").manual_seed(seed)
-#         images = paint_pipeline(prompt=prompt, init_image=init_img, mask_image=mask_img, num_inference_steps=steps, guidance_scale=scale, strength=strength, generator=generator)["sample"]
-#         result_image = images[0]
-    
-
-#     return result_image, button_update_1, button_update_2, button_update_3
-
-def inpaint_predict(dict, prompt, steps=50, scale=7.5, strength=0.8, seed=42, num_images=4):
+def inpaint_predict(dict, prompt, steps=50, scale=7.5, strength=0.8, seed=42):
     gc.collect()
     torch.cuda.empty_cache()
     torch.cuda.ipc_collect()
     button_update_1 = gr.Button.update(value='重新生成')
     button_update_2 = gr.Button.update(visible=True)
-    # button_update_3 = gr.Button.update(visible=False)
+    button_update_3 = gr.Button.update(visible=False)
     
     init_img = dict['image'].convert("RGB")
     mask_img = dict['mask'].convert("RGB")
-    width, height = init_img.size
-    max_side_th = MAX_SIDE - 192
-    max_side = max(width, height)
-    if max_side == width and width > max_side_th:
-        height = int(height * max_side_th / width)
-        width = max_side_th
-    elif max_side == height and height > max_side_th:
-        width = width * max_side_th / height
-        height = max_side_th
-
-    init_img = deal_width_exceed_maxside(init_img).resize((width, height), resample=Image.LANCZOS)
-    mask_img = deal_width_exceed_maxside(mask_img).resize((width, height), resample=Image.LANCZOS)
-    # w, h = init_img.size
-    result_images = []
-    for i in range(num_images):
-        with autocast("cuda"):
-            generator = torch.Generator("cuda").manual_seed(seed + i)
-            images = paint_pipeline(prompt=prompt, init_image=init_img, mask_image=mask_img, num_inference_steps=steps, guidance_scale=scale, strength=strength, generator=generator)["sample"]
-            result_images.append(images[0])
+    init_img = deal_width_exceed_maxside(init_img)
+    mask_img = deal_width_exceed_maxside(mask_img)
+    w, h = init_img.size
     
-    grids = image_grid(result_images, num_images)
-    # return grids, result_images, button_update_1, button_update_2, button_update_3
-    return grids, result_images, button_update_1, button_update_2
+    with autocast("cuda"):
+        generator = torch.Generator("cuda").manual_seed(seed)
+        images = paint_pipeline(prompt=prompt, init_image=init_img, mask_image=mask_img, num_inference_steps=steps, guidance_scale=scale, strength=strength, generator=generator)["sample"]
+        result_image = images[0]
+    
+
+    return result_image, button_update_1, button_update_2, button_update_3
+
+# def inpaint_predict(dict, prompt, steps=50, scale=7.5, strength=0.8, seed=42, num_images=4):
+#     gc.collect()
+#     torch.cuda.empty_cache()
+#     torch.cuda.ipc_collect()
+#     button_update_1 = gr.Button.update(value='重新生成')
+#     button_update_2 = gr.Button.update(visible=True)
+#     # button_update_3 = gr.Button.update(visible=False)
+    
+#     init_img = dict['image'].convert("RGB")
+#     mask_img = dict['mask'].convert("RGB")
+#     width, height = init_img.size
+#     max_side_th = MAX_SIDE - 192
+#     max_side = max(width, height)
+#     if max_side == width and width > max_side_th:
+#         height = int(height * max_side_th / width)
+#         width = max_side_th
+#     elif max_side == height and height > max_side_th:
+#         width = width * max_side_th / height
+#         height = max_side_th
+
+#     init_img = deal_width_exceed_maxside(init_img).resize((width, height), resample=Image.LANCZOS)
+#     mask_img = deal_width_exceed_maxside(mask_img).resize((width, height), resample=Image.LANCZOS)
+#     # w, h = init_img.size
+#     result_images = []
+#     for i in range(num_images):
+#         with autocast("cuda"):
+#             generator = torch.Generator("cuda").manual_seed(seed + i)
+#             images = paint_pipeline(prompt=prompt, init_image=init_img, mask_image=mask_img, num_inference_steps=steps, guidance_scale=scale, strength=strength, generator=generator)["sample"]
+#             result_images.append(images[0])
+    
+#     grids = image_grid(result_images, num_images)
+#     # return grids, result_images, button_update_1, button_update_2, button_update_3
+#     return grids, result_images, button_update_1, button_update_2
 
 
 def outpaint_predict(image, prompt, direction, expand_lenth, steps=50, scale=7.5, strength=0.8, seed=2022):
