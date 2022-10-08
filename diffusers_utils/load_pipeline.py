@@ -4,7 +4,7 @@ from transformers import BertTokenizer, BertForSequenceClassification
 import torch
 import gc
 
-device = "cuda:6"
+device = "cuda"
 
 class DummySafeChecker():
     def __init__(self,):
@@ -24,7 +24,7 @@ paint_pipeline = StableDiffusionInpaintPipeline.from_pretrained(
     "CompVis/stable-diffusion-v1-4",
     revision="fp16", 
     torch_dtype=torch.float16,
-    use_auth_token=False
+    use_auth_token=True
 ).to(device)
 
 paint_pipeline.safety_checker = DummySafeChecker()

@@ -18,7 +18,8 @@ def inpaint_predict(dict, prompt, steps=50, scale=7.5, strength=0.8, seed=42):
     gc.collect()
     torch.cuda.empty_cache()
     torch.cuda.ipc_collect()
-    button_update_1 = gr.Button.update(value='Re-Run Generation')
+
+    button_update_1 = gr.Button.update(value='重新生成')
     button_update_2 = gr.Button.update(visible=True)
     button_update_3 = gr.Button.update(visible=False)
     
@@ -36,16 +37,26 @@ def inpaint_predict(dict, prompt, steps=50, scale=7.5, strength=0.8, seed=42):
 
     return result_image, button_update_1, button_update_2, button_update_3
 
-# def inpaint_predict(dict, prompt, width, height, steps=50, scale=7.5, strength=0.8, seed=42, num_images=4):
+# def inpaint_predict(dict, prompt, steps=50, scale=7.5, strength=0.8, seed=42, num_images=4):
 #     gc.collect()
 #     torch.cuda.empty_cache()
 #     torch.cuda.ipc_collect()
-#     button_update_1 = gr.Button.update(value='Re-Run Generation')
+#     button_update_1 = gr.Button.update(value='重新生成')
 #     button_update_2 = gr.Button.update(visible=True)
 #     # button_update_3 = gr.Button.update(visible=False)
     
 #     init_img = dict['image'].convert("RGB")
 #     mask_img = dict['mask'].convert("RGB")
+#     width, height = init_img.size
+#     max_side_th = MAX_SIDE - 192
+#     max_side = max(width, height)
+#     if max_side == width and width > max_side_th:
+#         height = int(height * max_side_th / width)
+#         width = max_side_th
+#     elif max_side == height and height > max_side_th:
+#         width = width * max_side_th / height
+#         height = max_side_th
+
 #     init_img = deal_width_exceed_maxside(init_img).resize((width, height), resample=Image.LANCZOS)
 #     mask_img = deal_width_exceed_maxside(mask_img).resize((width, height), resample=Image.LANCZOS)
 #     # w, h = init_img.size
@@ -62,11 +73,12 @@ def inpaint_predict(dict, prompt, steps=50, scale=7.5, strength=0.8, seed=42):
 
 
 def outpaint_predict(image, prompt, direction, expand_lenth, steps=50, scale=7.5, strength=0.8, seed=2022):
+    outpainting_max_side = MAX_SIDE - 192
     gc.collect()
     torch.cuda.empty_cache()
     torch.cuda.ipc_collect()
     
-    button_update_1 = gr.Button.update(value='Re-Run Generation')
+    button_update_1 = gr.Button.update(value='重新生成')
     button_update_2 = gr.Button.update(visible=True)
     button_update_3 = gr.Button.update(visible=False)
 
@@ -79,12 +91,12 @@ def outpaint_predict(image, prompt, direction, expand_lenth, steps=50, scale=7.5
     else:
         w_expanded = w
         h_expanded = h + expand_lenth
-    if w_expanded > MAX_SIDE:
-        expand_lenth = MAX_SIDE - w
-        w_expanded = MAX_SIDE
-    if h_expanded > MAX_SIDE:
-        expand_lenth = MAX_SIDE - h
-        h_expanded = MAX_SIDE
+    if w_expanded > outpainting_max_side:
+        expand_lenth = outpainting_max_side - w
+        w_expanded = outpainting_max_side
+    if h_expanded > outpainting_max_side:
+        expand_lenth = outpainting_max_side - h
+        h_expanded = outpainting_max_side
     if h_expanded == h and w_expanded == w:
         result_image = image
         return result_image, button_update_1, button_update_2, button_update_3
@@ -144,7 +156,7 @@ def multi2image_predict(init_img, prompt, width, height, steps=50, scale=7.5, st
     torch.cuda.empty_cache()
     torch.cuda.ipc_collect()
     
-    button_update_1 = gr.Button.update(value='Re-Run Generation')
+    button_update_1 = gr.Button.update(value='重新生成')
     button_update_2 = gr.Button.update(visible=True)
     button_update_3 = gr.Button.update(visible=False)
     result_images = []
