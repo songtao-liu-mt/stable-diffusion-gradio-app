@@ -1,8 +1,9 @@
 from pickle import NONE
 from diffusers import StableDiffusionInpaintPipeline, StableDiffusionImg2ImgPipeline, StableDiffusionPipeline
-from transformers import BertTokenizer, BertForSequenceClassification
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 import torch
 import gc
+import logging
 
 device = "cuda"
 
@@ -50,6 +51,18 @@ text2image_pipeline = StableDiffusionPipeline(
     safety_checker = paint_pipeline.safety_checker,
     feature_extractor = paint_pipeline.feature_extractor,
 ).to(device)
+
+class Translator:
+    def __init__(self, model_path):
+        logging.info('init...')
+        self.tokenizer = AutoTokenizer.from_pretrained(model_path)
+        self.model = AutoModelForSeq2SeqLM.from_pretrained(model_path).to('cpu')
+        logging.info('finish load translator')
+    def __call__(self, text):
+        tokenized_text = self.tokenizer.prepare_seq2seq_batch([text], return_tensors='pt').to('cpu')
+        translation = self.model.generate(**tokenized_text)
+        return self.tokenizer.batch_decode(translation, skip_special_tokens=False)[0]
+translator_zh2en = Translator(model_path='models/opus_mt')
 
 gc.collect()
 torch.cuda.empty_cache()

@@ -21,8 +21,7 @@ __dir__ = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(__dir__)
 from diffusers_func import inpaint_predict, outpaint_predict, multi2image_predict, text2image_predict, variance_predict
 
-DESCRIPTION = '''# 马良 AIGC 创作平台
-注意: 此应用目前只支持英文输入
+DESCRIPTION = '''# 摩尔线程马良 AIGC 创作平台
 '''
 
 RealESRGAN_dir = 'models/realesrgan'
@@ -152,7 +151,8 @@ def main():
                             with gr.Group():
                                 with gr.Tabs():
                                     with gr.TabItem('文本输入'):
-                                        text_prompt = gr.Textbox(value="A fantasy landscape, trending on artstation.",
+                                        lang = gr.Radio(value='英文', choices=['英文', '中文'], show_label=False)
+                                        text_prompt = gr.Textbox(value="",
                                                             lines=12, label='输入文本')
                                     with gr.TabItem('图像输入'):
                                         init_img = gr.Image(type="pil", label="初始图像")
@@ -212,12 +212,12 @@ def main():
                                     with gr.Row():
                                         confirm_button = gr.Button(visible=False)
                                         hr_button = gr.Button('生成高清图像', variant="primary", visible=False)
-                                result_gallery = gr.Gallery(labels="Images", elem_id="sd_outputs",).style(grid=[2,2])
+                                result_gallery = gr.Gallery(labels="Images", elem_id="sd_outputs", show_label=False).style(grid=[2,2])
                             with gr.TabItem('超分辨率', id='hr_tab'):
                                 with gr.TabItem('高清图像'):
-                                    hr_image = gr.Image(labels="高清图像", show_label=True,)
+                                    hr_image = gr.Image(labels="高清图像", show_label=False)
                                 with gr.TabItem('v.s. 原图'):
-                                    low_image = gr.Image(labels="原图", show_label=True)
+                                    low_image = gr.Image(labels="原图", show_label=False)
                             with gr.TabItem('网格展示'):
                                 result_grid = gr.Image(show_label=False)
                 run_button.click(fn=multi2image_predict,
@@ -230,7 +230,8 @@ def main():
                                     scale,
                                     strength,
                                     seed,
-                                    num_images
+                                    num_images,
+                                    lang
                                 ],
                                 outputs=[
                                     result_grid,
@@ -269,7 +270,8 @@ def main():
                                     
                                 with gr.Tabs():
                                     with gr.TabItem('文本输入'):
-                                        text_prompt = gr.Textbox(value="A fantasy landscape, trending on artstation.",
+                                        lang = gr.Radio(value='英文', choices=['英文', '中文'], show_label=False)
+                                        text_prompt = gr.Textbox(value="",
                                                             lines=12, label='输入文本')
                                 with gr.Row():
                                     run_button = gr.Button('运行生成', variant="primary")
@@ -322,12 +324,12 @@ def main():
                                         gr.Markdown('选择一张图片并点击 “超分” 生成高清图像')
                                     with gr.Row():
                                         hr_button = gr.Button('生成高清图像', variant="primary", visible=False)
-                                result_gallery = gr.Gallery(labels="Images", elem_id="variance_outputs").style(grid=[2,2])
+                                result_gallery = gr.Gallery(labels="Images", elem_id="variance_outputs", show_label=False).style(grid=[2,2])
                             with gr.TabItem('超分辨率', id='hr_tab'):
                                 with gr.TabItem('高清图像'):
-                                    hr_image = gr.Image(labels="高清图像", show_label=True)
+                                    hr_image = gr.Image(labels="高清图像", show_label=False)
                                 with gr.TabItem('v.s. 原图'):
-                                    low_image = gr.Image(labels="原图", show_label=True)
+                                    low_image = gr.Image(labels="原图", show_label=False)
                             with gr.TabItem('网格展示'):
                                 result_grid = gr.Image(show_label=False)
                 run_button.click(fn=variance_predict,
@@ -339,7 +341,8 @@ def main():
                                     scale,
                                     strength,
                                     seed,
-                                    num_images
+                                    num_images,
+                                    lang
                                 ],
                                 outputs=[
                                     result_grid,
@@ -363,6 +366,7 @@ def main():
                                     with gr.TabItem('图像输入'):
                                         init_img = gr.Image(type="pil", label="初始图像", source="canvas")
                                     with gr.TabItem('文本输入'):
+                                        lang = gr.Radio(value='英文', choices=['英文', '中文'], show_label=False)
                                         text_prompt = gr.Textbox(lines=12, label='输入文本')
                                 with gr.Row():
                                     run_button = gr.Button('运行生成', variant="primary")
@@ -415,12 +419,12 @@ def main():
                                     with gr.Row():
                                         confrim_button = gr.Button(visible=False)
                                         hr_button = gr.Button('生成高清图像', variant="primary", visible=False)
-                                result_gallery = gr.Gallery(labels="Images", elem_id="sketch_outputs").style(grid=[2,2])
+                                result_gallery = gr.Gallery(labels="Images", elem_id="sketch_outputs", show_label=False).style(grid=[2,2])
                             with gr.TabItem('超分辨率', id='hr_tab'):
                                 with gr.TabItem('高清图像'):
-                                    hr_image = gr.Image(labels="高清图像", show_label=True)
+                                    hr_image = gr.Image(labels="高清图像", show_label=False)
                                 with gr.TabItem('v.s. 原图'):
-                                    low_image = gr.Image(labels="原图", show_label=True)
+                                    low_image = gr.Image(labels="原图", show_label=False)
                             with gr.TabItem('网格展示'):
                                 result_grid = gr.Image(show_label=False)
                 run_button.click(fn=multi2image_predict,
@@ -433,7 +437,8 @@ def main():
                                     scale,
                                     strength,
                                     seed,
-                                    num_images
+                                    num_images,
+                                    lang
                                 ],
                                 outputs=[
                                     result_grid,
@@ -460,6 +465,7 @@ def main():
                                     with gr.TabItem('图像输入'):
                                         init_img = gr.Image(type="pil", label="初始图像", id='input_img')
                                     with gr.TabItem('文本输入'):
+                                        lang = gr.Radio(value='英文', choices=['英文', '中文'], show_label=False)
                                         text_prompt = gr.Textbox(lines=12, label='输入文本')
                                 with gr.Row():
                                     run_button = gr.Button('运行生成', variant="primary")
@@ -510,12 +516,12 @@ def main():
                                     with gr.Row():
                                         confirm_button = gr.Button('选择', variant="primary", visible=False)
                                         hr_button = gr.Button('生成高清图像', variant="primary", visible=False) 
-                                result_gallery = gr.Gallery(labels="Images", elem_id="sd_outputs").style(grid=[3,3])
+                                result_gallery = gr.Gallery(labels="Images", elem_id="sd_outputs", show_label=False).style(grid=[3,3])
                             with gr.TabItem('超分辨率', id='hr_tab'):
                                 with gr.TabItem('高清图像'):
-                                    hr_image = gr.Image(labels="高清图像", show_label=True, id='hr_outputs') 
+                                    hr_image = gr.Image(labels="高清图像", show_label=False, id='hr_outputs') 
                                 with gr.TabItem('v.s. 原图'):
-                                    low_image = gr.Image(labels="原图", show_label=True)
+                                    low_image = gr.Image(labels="原图", show_label=False)
                             with gr.TabItem('网格展示'):
                                 result_grid = gr.Image(show_label=False)
                 run_button.click(fn=multi2image_predict,
@@ -528,7 +534,9 @@ def main():
                                 scale,
                                 strength,
                                 seed,
-                                num_images
+                                num_images,
+                                lang
+                                
                             ],
                             outputs=[
                                 result_grid,
@@ -572,6 +580,7 @@ def main():
             #                         with gr.TabItem('图像输入'):
             #                             init_img = gr.Image(type="pil", label="初始图像最大边 768", tool='sketch')
             #                         with gr.TabItem('文本输入'):
+            #                             lang = gr.Radio(value='英文', choices=['英文', '中文'], show_label=False)
             #                             text_prompt = gr.Textbox(lines=12, label='输入文本')
             #                     with gr.Row():
             #                         run_button = gr.Button('运行生成', variant="primary")
@@ -627,24 +636,24 @@ def main():
             #                         with gr.Row():
             #                             confirm_button = gr.Button('选择', variant="primary", visible=False)
             #                             hr_button = gr.Button('生成高清图像', variant="primary", visible=False)
-            #                     result_gallery = gr.Gallery(labels="Images", elem_id="inpaiting_outputs").style(grid=[2,2])
+            #                     result_gallery = gr.Gallery(labels="Images", elem_id="inpaiting_outputs", show_label=False).style(grid=[2,2])
             #                 with gr.TabItem('超分辨率', id='hr_tab'):
             #                     with gr.TabItem('高清图像'):
-            #                         hr_image = gr.Image(labels="高清图像", show_label=True)
+            #                         hr_image = gr.Image(labels="高清图像", show_label=False)
             #                     with gr.TabItem('v.s. 原图'):
-            #                         low_image = gr.Image(labels="原图", show_label=True)
+            #                         low_image = gr.Image(labels="原图", show_label=False)
             #                 with gr.TabItem('网格展示'):
             #                     result_grid = gr.Image(show_label=False)
             #     run_button.click(fn=inpaint_predict,
             #                     inputs=[
             #                         None if not init_img else init_img,
             #                         text_prompt,
-
             #                         steps,
             #                         scale,
             #                         strength,
             #                         seed,
-            #                         num_images
+            #                         num_images,
+            #                         lang
             #                     ],
             #                     outputs=[
             #                         result_grid,
@@ -693,6 +702,7 @@ def main():
                         with gr.Column():
                             with gr.Tabs():
                                 with gr.TabItem('文本输入'):
+                                    lang = gr.Radio(value='英文', choices=['英文', '中文'], show_label=False)
                                     text_prompt = gr.Textbox(lines=3, label='输入文本')
                                 
                             with gr.Group():
@@ -732,9 +742,9 @@ def main():
                                 result_image = gr.Image(show_label=False, interactive=False)   
                             with gr.TabItem('超分辨率', id='hr_tab'):
                                 with gr.TabItem('高清图像'):
-                                    hr_image = gr.Image(labels="高清图像", show_label=True) 
+                                    hr_image = gr.Image(labels="高清图像", show_label=False) 
                                 with gr.TabItem('v.s. 原图'):
-                                    low_image = gr.Image(labels="原图", show_label=True)
+                                    low_image = gr.Image(labels="原图", show_label=False)
             
                 run_button.click(fn=inpaint_predict,
                             inputs=[
@@ -743,7 +753,8 @@ def main():
                                 steps,
                                 scale,
                                 strength,
-                                seed
+                                seed,
+                                lang
                             ],
                             outputs=[
                                 result_image,
@@ -783,7 +794,8 @@ def main():
                         with gr.Column():
                             with gr.Tabs():
                                 with gr.TabItem('文本输入'):
-                                        text_prompt = gr.Textbox(lines=3, label='输入文本')
+                                    lang = gr.Radio(value='英文', choices=['英文', '中文'], show_label=False)
+                                    text_prompt = gr.Textbox(lines=3, label='输入文本')
                             with gr.Group():
                                 direction = gr.Radio(
                                      choices=['左', '右', '上', '下'],
@@ -794,7 +806,7 @@ def main():
                                     0, 
                                     512, 
                                     step=64, 
-                                    label='Outpainting Size')
+                                    label='扩展尺寸')
                                 steps = gr.Slider(20,
                                                     200,
                                                     step=1,
@@ -826,9 +838,9 @@ def main():
                                 result_image = gr.Image(show_label=False, interactive=False)   
                             with gr.TabItem('超分辨率', id='hr_tab'):
                                 with gr.TabItem('高清图像'):
-                                    hr_image = gr.Image(labels="高清图像", show_label=True) 
+                                    hr_image = gr.Image(labels="高清图像", show_label=False) 
                                 with gr.TabItem('v.s. 原图'):
-                                    low_image = gr.Image(labels="原图", show_label=True)
+                                    low_image = gr.Image(labels="原图", show_label=False)
             
                 run_button.click(fn=outpaint_predict,
                             inputs=[
@@ -839,7 +851,8 @@ def main():
                                 steps,
                                 scale,
                                 strength,
-                                seed
+                                seed,
+                                lang
                             ],
                             outputs=[
                                 result_image,
@@ -872,8 +885,8 @@ def main():
         
             with gr.TabItem('超分辨率', id="sr_tab"):
                     with gr.Column():
-                        SR_input_img = gr.Image(type="pil", label="SR input image here", elem_id="sr_input")
-                        SR_button = gr.Button('Run SR', variant="primary")
+                        SR_input_img = gr.Image(type="pil", label="低分辨率图像", elem_id="sr_input")
+                        SR_button = gr.Button('生成高清图像', variant="primary")
                     with gr.Column():
                         with gr.Tabs() as result_tabs_hr:
                             with gr.TabItem('高清图像', id='hr_tab'):
