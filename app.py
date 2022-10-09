@@ -364,7 +364,7 @@ def main():
                             with gr.Group():
                                 with gr.Tabs():
                                     with gr.TabItem('图像输入'):
-                                        init_img = gr.Image(type="pil", label="初始图像", source="canvas")
+                                        init_img = gr.Image(type="pil", label="初始图像", source="canvas", tool="color-sketch")
                                     with gr.TabItem('文本输入'):
                                         lang = gr.Radio(value='英文', choices=['英文', '中文'], show_label=False)
                                         text_prompt = gr.Textbox(lines=12, label='输入文本')
@@ -911,7 +911,7 @@ def main():
         
     demo.launch(
         server_name="0.0.0.0",
-        server_port=8082,
+        server_port=8080,
         enable_queue=True,
         share=args.share,
     )
