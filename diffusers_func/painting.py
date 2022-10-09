@@ -88,7 +88,7 @@ def outpaint_predict(image, prompt, direction, expand_lenth, steps=50, scale=7.5
     image = deal_width_exceed_maxside(image)
     w, h = image.size
     assert expand_lenth % 64 == 0
-    if direction == 'left' or direction == 'right':
+    if direction == '左' or direction == '右':
         w_expanded = w +  expand_lenth
         h_expanded = h
     else:
@@ -106,7 +106,7 @@ def outpaint_predict(image, prompt, direction, expand_lenth, steps=50, scale=7.5
     
     init_img = image.convert("RGB")
     init_img = np.array(init_img)
-    if direction == 'top':
+    if direction == '上':
         init_img = cv2.copyMakeBorder(init_img, 
                                     expand_lenth, 
                                     0,
@@ -114,7 +114,7 @@ def outpaint_predict(image, prompt, direction, expand_lenth, steps=50, scale=7.5
                                     0,
                                     cv2.BORDER_DEFAULT)
         left_upper = (0, expand_lenth)
-    elif direction == 'bottom':
+    elif direction == '下':
         init_img = cv2.copyMakeBorder(init_img, 
                                     0, 
                                     expand_lenth,
@@ -122,7 +122,7 @@ def outpaint_predict(image, prompt, direction, expand_lenth, steps=50, scale=7.5
                                     0,
                                     cv2.BORDER_DEFAULT)
         left_upper = (0, 0)
-    elif direction == 'left':
+    elif direction == '左':
         init_img = cv2.copyMakeBorder(init_img, 
                                     0, 
                                     0,
@@ -130,7 +130,7 @@ def outpaint_predict(image, prompt, direction, expand_lenth, steps=50, scale=7.5
                                     0,
                                     cv2.BORDER_DEFAULT)
         left_upper = (expand_lenth, 0)
-    elif direction == 'right':
+    elif direction == '右':
         init_img = cv2.copyMakeBorder(init_img, 
                                     0, 
                                     0,
