@@ -84,10 +84,11 @@ def cp_one_image_from_gallery_to_original(img):
     try:
         image_data = re.sub('^data:image/.+;base64,', '', img)
         processed_image = Image.open(BytesIO(base64.b64decode(image_data)))
+        img_update = gr.update(value=processed_image)
         button_update_1 = gr.Button.update(value='运行生成')
         button_update_2 = gr.Button.update(visible=False)
         button_update_3 = gr.Button.update(visible=True)
-        return processed_image, button_update_1, button_update_2, button_update_3
+        return img_update, button_update_1, button_update_2, button_update_3
     except IndexError:
         return [None] * 5
 
@@ -215,7 +216,7 @@ def main():
                                 result_gallery = gr.Gallery(labels="Images", elem_id="sd_outputs", show_label=False).style(grid=[2,2])
                             with gr.TabItem('超分辨率', id='hr_tab'):
                                 with gr.TabItem('高清图像'):
-                                    hr_image = gr.Image(labels="高清图像", show_label=False)
+                                    hr_image = gr.Image(labels="高清图像", show_label=False, id='hr_outputs')
                                 with gr.TabItem('v.s. 原图'):
                                     low_image = gr.Image(labels="原图", show_label=False)
                             with gr.TabItem('网格展示'):
@@ -327,7 +328,7 @@ def main():
                                 result_gallery = gr.Gallery(labels="Images", elem_id="variance_outputs", show_label=False).style(grid=[2,2])
                             with gr.TabItem('超分辨率', id='hr_tab'):
                                 with gr.TabItem('高清图像'):
-                                    hr_image = gr.Image(labels="高清图像", show_label=False)
+                                    hr_image = gr.Image(labels="高清图像", show_label=False, id='hr_outputs')
                                 with gr.TabItem('v.s. 原图'):
                                     low_image = gr.Image(labels="原图", show_label=False)
                             with gr.TabItem('网格展示'):
@@ -422,7 +423,7 @@ def main():
                                 result_gallery = gr.Gallery(labels="Images", elem_id="sketch_outputs", show_label=False).style(grid=[2,2])
                             with gr.TabItem('超分辨率', id='hr_tab'):
                                 with gr.TabItem('高清图像'):
-                                    hr_image = gr.Image(labels="高清图像", show_label=False)
+                                    hr_image = gr.Image(labels="高清图像", show_label=False, id='hr_outputs')
                                 with gr.TabItem('v.s. 原图'):
                                     low_image = gr.Image(labels="原图", show_label=False)
                             with gr.TabItem('网格展示'):
@@ -514,9 +515,9 @@ def main():
                             with gr.TabItem('生成结果'):
                                 with gr.Group():
                                     with gr.Row():
-                                        confirm_button = gr.Button('选择', variant="primary", visible=False)
+                                        confirm_button = gr.Button('确定', variant="primary", visible=False)
                                         hr_button = gr.Button('生成高清图像', variant="primary", visible=False) 
-                                result_gallery = gr.Gallery(labels="Images", elem_id="sd_outputs", show_label=False).style(grid=[3,3])
+                                result_gallery = gr.Gallery(labels="Images", elem_id="iterative_outputs", show_label=False).style(grid=[3,3])
                             with gr.TabItem('超分辨率', id='hr_tab'):
                                 with gr.TabItem('高清图像'):
                                     hr_image = gr.Image(labels="高清图像", show_label=False, id='hr_outputs') 
@@ -557,7 +558,7 @@ def main():
                                         hr_button
                                     ],
                                     _js=call_JS("moveImageFromGallery",
-                                                fromId="sd_outputs",
+                                                fromId="iterative_outputs",
                                                 toId="input_img")
                                     )
                 
@@ -565,126 +566,9 @@ def main():
                                 inputs=[result_gallery],
                                 outputs=[low_image, hr_image, result_tabs_iteration],
                                 _js=call_JS("moveImageFromGallery",
-                                            fromId="sd_outputs",
+                                            fromId="iterative_outputs",
                                             toId="hr_outputs")
                                 ) 
-           
-
-            # with gr.TabItem('局部编辑'):
-            #     with gr.Row():
-            #         with gr.Row():
-            #             with gr.Column():
-            #                 with gr.Group():
-            #                     with gr.Tabs():
-
-            #                         with gr.TabItem('图像输入'):
-            #                             init_img = gr.Image(type="pil", label="初始图像最大边 768", tool='sketch')
-            #                         with gr.TabItem('文本输入'):
-            #                             lang = gr.Radio(value='英文', choices=['英文', '中文'], show_label=False)
-            #                             text_prompt = gr.Textbox(lines=12, label='输入文本')
-            #                     with gr.Row():
-            #                         run_button = gr.Button('运行生成', variant="primary")
-            #             with gr.Column():
-            #                 with gr.Group():
-            #                     width = gr.Slider(512,
-            #                                         960,
-            #                                         step=64,
-            #                                         value=512,
-            #                                         label='width')
-            #                     height = gr.Slider(512,
-            #                                         576,
-            #                                         step=64,
-            #                                         value=512,
-            #                                         label='height')
-            #                     steps = gr.Slider(20,
-            #                                         200,
-            #                                         step=1,
-            #                                         value=50,
-            #                                         label='步数')
-            #                     scale = gr.Slider(1.0,
-            #                                         20.0,
-            #                                         step=0.5,
-            #                                         value=7.5,
-            #                                         label='尺度')
-            #                     strength = gr.Slider(0.0,
-            #                                             0.99,
-            #                                             step=0.01,
-            #                                             value=0.9,
-            #                                             label='文本权重')
-            #                     seed = gr.Slider(0,
-            #                                         1000,
-            #                                         step=1,
-            #                                         value=42,
-
-            #                                         label='种子数')
-            #                     num_images = gr.Slider(1,
-            #                                             9,
-            #                                             step=1,
-            #                                             value=4,
-
-            #                                             label='图像数量')
-
-            #     with gr.Column():
-            #         with gr.Group():
-            #             #translated_text = gr.Textbox(label='Translated Text')
-            #             with gr.Tabs() as result_tabs_iteration:
-
-            #                 with gr.TabItem('生成结果'):
-            #                     with gr.Group():
-            #                         with gr.Row():
-            #                             gr.Markdown('选择一张图片并点击 “超分” 生成高清图像')
-            #                         with gr.Row():
-            #                             confirm_button = gr.Button('选择', variant="primary", visible=False)
-            #                             hr_button = gr.Button('生成高清图像', variant="primary", visible=False)
-            #                     result_gallery = gr.Gallery(labels="Images", elem_id="inpaiting_outputs", show_label=False).style(grid=[2,2])
-            #                 with gr.TabItem('超分辨率', id='hr_tab'):
-            #                     with gr.TabItem('高清图像'):
-            #                         hr_image = gr.Image(labels="高清图像", show_label=False)
-            #                     with gr.TabItem('v.s. 原图'):
-            #                         low_image = gr.Image(labels="原图", show_label=False)
-            #                 with gr.TabItem('网格展示'):
-            #                     result_grid = gr.Image(show_label=False)
-            #     run_button.click(fn=inpaint_predict,
-            #                     inputs=[
-            #                         None if not init_img else init_img,
-            #                         text_prompt,
-            #                         steps,
-            #                         scale,
-            #                         strength,
-            #                         seed,
-            #                         num_images,
-            #                         lang
-            #                     ],
-            #                     outputs=[
-            #                         result_grid,
-            #                         result_gallery,
-            #                         run_button,
-            #                         # confirm_button,
-            #                         hr_button,
-            #                     ])
-                
-            #     # confirm_button.click(fn=cp_one_image_from_gallery_to_original,
-            #     #                     inputs=[
-            #     #                         result_gallery
-            #     #                     ],
-            #     #                     outputs=[
-            #     #                         init_img,
-            #     #                         run_button,
-            #     #                         confirm_button,
-            #     #                         hr_button
-            #     #                     ],
-            #     #                     _js=call_JS("moveImageFromGallery",
-            #     #                                 fromId="sd_outputs",
-            #     #                                 toId="input_img")
-            #     #                     )
-                
-            #     hr_button.click(fn=SR_model.run,
-            #                     inputs=[result_gallery],
-            #                     outputs=[low_image, hr_image, result_tabs_iteration],
-            #                     _js=call_JS("moveImageFromGallery",
-            #                                 fromId="inpaiting_outputs",
-            #                                 toId="hr_outputs")
-            #                     ) 
                 
 
             with gr.TabItem('局部编辑'):
@@ -742,7 +626,7 @@ def main():
                                 result_image = gr.Image(show_label=False, interactive=False)   
                             with gr.TabItem('超分辨率', id='hr_tab'):
                                 with gr.TabItem('高清图像'):
-                                    hr_image = gr.Image(labels="高清图像", show_label=False) 
+                                    hr_image = gr.Image(labels="高清图像", show_label=False, id='hr_outputs') 
                                 with gr.TabItem('v.s. 原图'):
                                     low_image = gr.Image(labels="原图", show_label=False)
             
@@ -838,7 +722,7 @@ def main():
                                 result_image = gr.Image(show_label=False, interactive=False)   
                             with gr.TabItem('超分辨率', id='hr_tab'):
                                 with gr.TabItem('高清图像'):
-                                    hr_image = gr.Image(labels="高清图像", show_label=False) 
+                                    hr_image = gr.Image(labels="高清图像", show_label=False, id='hr_outputs') 
                                 with gr.TabItem('v.s. 原图'):
                                     low_image = gr.Image(labels="原图", show_label=False)
             
@@ -877,11 +761,6 @@ def main():
                                     inputs=[result_image],
                                     outputs=[low_image, hr_image, result_tabs_outpainting]
                                     ) 
-
-
-        
-
-        
         
             with gr.TabItem('超分辨率', id="sr_tab"):
                     with gr.Column():
