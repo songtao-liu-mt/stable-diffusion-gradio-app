@@ -783,6 +783,14 @@ def main():
                                         SR_result,
                                         result_tabs_hr
                                     ])
+            
+            with gr.TabItem('流程演示'):
+                    gr.Video(value='demos/maliang_demo.mp4',
+                             format='mp4',
+                             label='请点击播放，观看完整流程教学视频（建议打开全屏模式）。',
+                             show_label=True,
+                             interactive=False
+                             )
                 
         load_detector = gr.Number(value=0, label="Load Detector", visible=False)
         load_detector.change(None, None, None, _js=js())
@@ -790,7 +798,7 @@ def main():
         
     demo.launch(
         server_name="0.0.0.0",
-        server_port=8080,
+        server_port=7800,
         enable_queue=True,
         share=args.share,
     )
