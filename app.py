@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse, os, sys, glob, re
+from pickle import FALSE
 from select import select
 from os import path
 import numpy as np
@@ -23,6 +24,36 @@ from diffusers_func import inpaint_predict, outpaint_predict, multi2image_predic
 
 DESCRIPTION = '''# 摩尔线程马良 AIGC 创作平台
 '''
+
+GUIDENCE = '''为了更好地生成文本提示，从而生成优美的图片。文本输入通常遵循一定的原则。本篇将带领大家生成一个漂亮的文本输入。
+
+注意：为了净化网络环境，请慎重输入词汇，避免 **敏感词**，可能会出现黑色图片。
+
+#### 文本核心描述（必写）
+文本核心描述为文本提示最核心的部分，也是必不可少的部分。一般这个不分需要至少一个核心主体名词加上一定数量的形容词汇，或者动作描述。例如：
+1. 一个正在跑步的女孩
+2. 一只聪明的熊猫在喝可口可乐
+
+#### 类型（必写）
+类型也是文本必不可少的内容。通常来说，类型包括但不限于 照片、肖像、油画、草图、素描、电影海报、广告、3D渲染、图案等等
+
+以上两部分就可以醉成最简单的文本描述。例如：
+1. 一个正在跑步的女孩的照片
+2. 一只聪明的熊猫在喝可口可乐的电影海报
+
+除了以上两部分为必写内容，可以按照自己的想法加入图像的风格，主体的颜色，图像的纹理，图像分辨率，图像的类型，任务的情绪，所处的时代等等。简单的形式可以用逗号的形式分开。不同的顺序也会产生不同的结果。但是，每一个句子里的中文单字 + 英文单词 建议不要超过 77 个。
+
+在「文本输入」下方有一些例子。
+
+
+'''
+SUB_GUIDENCE = '为了净化网络环境，请慎重输入词汇，避免 **敏感词**，可能会出现黑图。建议先阅读「马良生成」中的「文本输入引导」'
+TEXT_EXAMPLES = [
+            '一个正在跑步的女孩的照片，穿着红色裙子，8k高清的图片，背景虚化的拍照风格',
+            '一只聪明的熊猫在喝可口可乐的电影海报， 戴着极光蓝的帽子，8k高清图片，在宋朝时期',
+            'low wide angle shot of dilapidated fallout 5 miami, tropical coastal city, desolate, dilapidated neon signs, few rusted retro futuristic vintage parked vehicles like cars, buses, trucks, trams, volumetric lighting, photorealistic, foggy, rain daytime, autumn, overcast weather, sharp focus, ultra detailed, 8k',
+            'magic fluffy Persian carpet dimension, by Greg Rutkowski and Gaston Bussiere, dim lighting, beautiful volumetric-lighting-style atmosphere, surreal atmosphere, intricate, detailed, photorealistic imagery, artstation',
+        ]
 
 RealESRGAN_dir = 'models/realesrgan'
 mimetypes.init()
@@ -144,6 +175,7 @@ def main():
 
     with gr.Blocks(css='style.css') as demo:
         gr.Markdown(DESCRIPTION)
+        # gr.Markdown(GUIDENCE)
         with gr.Tabs() as tabs:
             with gr.TabItem('马良生成'):
                 with gr.Row():
@@ -153,15 +185,24 @@ def main():
                                 with gr.Tabs():
                                     with gr.TabItem('文本输入'):
                                         lang = gr.Radio(value='英文', choices=['英文', '中文'], show_label=False)
-                                        text_prompt = gr.Textbox(value="",
-                                                            lines=12, label='输入文本')
+                                        text_prompt = gr.Textbox(value='', label='输入文本前，请先阅读「文本输入引导」', lines=6, interactive=True)
+                                        gr.Examples(
+                                            label='文本示例',
+                                            examples=TEXT_EXAMPLES,
+                                            inputs=text_prompt,
+                                            
+                                        )
                                     with gr.TabItem('图像输入'):
                                         init_img = gr.Image(type="pil", label="初始图像")
                                         gr.Examples(
-                                            examples = [os.path.join(os.path.dirname(__file__), "assets/stable-samples/img2img/sketch-mountains-input.jpg"),
-                                                        os.path.join(os.path.dirname(__file__), "assets/logo.jpeg")],
-                                            inputs = init_img,
+                                            label='图像示例',
+                                            examples=[
+                                                        os.path.join(os.path.dirname(__file__), "assets/logo.jpeg")
+                                                     ],
+                                            inputs=init_img,
                                         )
+                                    with gr.TabItem('文本输入引导'):
+                                        gr.Markdown(GUIDENCE)
                                 with gr.Row():
                                     run_button = gr.Button('运行生成', variant="primary")
                         with gr.Column():
@@ -169,7 +210,7 @@ def main():
                                 width = gr.Slider(512,
                                                     960,
                                                     step=64,
-                                                    value=960,
+                                                    value=512,
                                                     label='图像宽度')
                                 height = gr.Slider(512,
                                                     576,
@@ -204,7 +245,6 @@ def main():
 
                 with gr.Column():
                     with gr.Group():
-                        #translated_text = gr.Textbox(label='Translated Text')
                         with gr.Tabs() as result_tabs_sd:
                             with gr.TabItem('结果预览'):
                                 with gr.Group():
@@ -252,15 +292,6 @@ def main():
                                             fromId="sd_outputs",
                                             toId="hr_outputs")
                                 )
-
-            
-                # copy_button.click(fn=copy_img_to_sr,
-                #                 inputs=[result_gallery],
-                #                 outputs=[SR_input_img, tabs],
-                #                 _js=call_JS("moveImageFromGallery",
-                #                             fromId="sd_outputs",
-                #                             toId="sr_input")
-                #                 )
         
             with gr.TabItem('相似生成'):
                 with gr.Row():
@@ -273,7 +304,7 @@ def main():
                                     with gr.TabItem('文本输入'):
                                         lang = gr.Radio(value='英文', choices=['英文', '中文'], show_label=False)
                                         text_prompt = gr.Textbox(value="",
-                                                            lines=12, label='输入文本')
+                                                            lines=12, label=SUB_GUIDENCE)
                                 with gr.Row():
                                     run_button = gr.Button('运行生成', variant="primary")
                                 
@@ -282,7 +313,7 @@ def main():
                                 width = gr.Slider(512,
                                                     960,
                                                     step=64,
-                                                    value=960,
+                                                    value=512,
                                                     label='图像宽度')
                                 height = gr.Slider(512,
                                                     576,
@@ -316,7 +347,6 @@ def main():
                                                         label='图像数量')   
                 with gr.Column():
                     with gr.Group():
-                        #translated_text = gr.Textbox(label='Translated Text')
                         with gr.Tabs() as result_tabs_variance:
                             
                             with gr.TabItem('结果预览'):
@@ -368,7 +398,7 @@ def main():
                                         init_img = gr.Image(type="pil", label="初始图像", source="canvas", tool="color-sketch")
                                     with gr.TabItem('文本输入'):
                                         lang = gr.Radio(value='英文', choices=['英文', '中文'], show_label=False)
-                                        text_prompt = gr.Textbox(lines=12, label='输入文本')
+                                        text_prompt = gr.Textbox(lines=12, label=SUB_GUIDENCE)
                                 with gr.Row():
                                     run_button = gr.Button('运行生成', variant="primary")
                         with gr.Column():
@@ -376,7 +406,7 @@ def main():
                                 width = gr.Slider(512,
                                                     960,
                                                     step=64,
-                                                    value=960,
+                                                    value=512,
                                                     label='图像宽度')
                                 height = gr.Slider(512,
                                                     576,
@@ -411,7 +441,6 @@ def main():
 
                 with gr.Column():
                     with gr.Group():
-                        #translated_text = gr.Textbox(label='Translated Text')
                         with gr.Tabs() as result_tabs_sketch:
                             with gr.TabItem('结果预览'):
                                 with gr.Group():
@@ -467,7 +496,7 @@ def main():
                                         init_img = gr.Image(type="pil", label="初始图像", id='input_img')
                                     with gr.TabItem('文本输入'):
                                         lang = gr.Radio(value='英文', choices=['英文', '中文'], show_label=False)
-                                        text_prompt = gr.Textbox(lines=12, label='输入文本')
+                                        text_prompt = gr.Textbox(lines=12, label=SUB_GUIDENCE)
                                 with gr.Row():
                                     run_button = gr.Button('运行生成', variant="primary")
                                     confirm_button = gr.Button('确认', variant="primary", visible=False)
@@ -579,7 +608,7 @@ def main():
                                 with gr.Tabs():
 
                                     with gr.TabItem('图像输入'):
-                                        init_img = gr.Image(type="pil", label="初始图像最大边 768", tool='sketch')
+                                        init_img = gr.Image(type="pil", label="初始图像最大边 768", tool='sketch', source='upload')
                                 with gr.Row():
                                     run_button = gr.Button('运行生成', variant="primary")
                                     confirm_button = gr.Button('确认', variant="primary", visible=False)
@@ -587,7 +616,7 @@ def main():
                             with gr.Tabs():
                                 with gr.TabItem('文本输入'):
                                     lang = gr.Radio(value='英文', choices=['英文', '中文'], show_label=False)
-                                    text_prompt = gr.Textbox(lines=3, label='输入文本')
+                                    text_prompt = gr.Textbox(lines=3, label=SUB_GUIDENCE)
                                 
                             with gr.Group():
 
@@ -679,7 +708,7 @@ def main():
                             with gr.Tabs():
                                 with gr.TabItem('文本输入'):
                                     lang = gr.Radio(value='英文', choices=['英文', '中文'], show_label=False)
-                                    text_prompt = gr.Textbox(lines=3, label='输入文本')
+                                    text_prompt = gr.Textbox(lines=3, label=SUB_GUIDENCE)
                             with gr.Group():
                                 direction = gr.Radio(
                                      choices=['左', '右', '上', '下'],
@@ -798,7 +827,7 @@ def main():
         
     demo.launch(
         server_name="0.0.0.0",
-        server_port=7800,
+        server_port=8080,
         enable_queue=True,
         share=args.share,
     )

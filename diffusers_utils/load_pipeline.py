@@ -4,8 +4,9 @@ from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 import torch
 import gc
 import logging
+from mt_filter.sensewords import ChineseFilter, EnglishFilter
 
-device = "cuda"
+device = "cuda:5"
 
 class DummySafeChecker():
     def __init__(self,):

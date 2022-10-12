@@ -52,12 +52,12 @@ def deal_width_exceed_maxside(image):
 
 
         
-def image_grid(imgs, num_images):
+def image_grid(imgs):
+    num_images = len(imgs)
     w, h = imgs[0].size
     rows = math.floor(num_images ** 0.5)
     cols = rows
-    grids = Image.new('RGB', size=(cols * w, rows*h))
-    grid_w, grid_h = grids.size
+    grids = Image.new('RGB', size=(cols * w, rows * h))
     for i, img in enumerate(imgs):
         grids.paste(img, box=(i % cols * w, i // cols * h))
     return grids
