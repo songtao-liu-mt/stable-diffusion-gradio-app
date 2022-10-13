@@ -16,6 +16,8 @@ import gradio as gr
 
 from model import AppModel
 
+os.environ["MTGPU_MAX_MEM_USAGE_GB"]="16"
+
 DESCRIPTION = '''# text2image New version with Stable Diffusion!
 Note: This application accepts ONLY English as input.
 '''
@@ -92,7 +94,7 @@ def main():
     args = parse_args()
     model = AppModel()
 
-    SR_model = RealESGAN_warp(load_RealESRGAN())
+    #SR_model = RealESGAN_warp(load_RealESRGAN())
 
     with gr.Blocks(css='style.css') as demo:
         gr.Markdown(DESCRIPTION)
@@ -106,7 +108,7 @@ def main():
                                     gr.Markdown('Once generation finished, select one image in Gallery and click \'Sent to SR model\' to adapt super resolution!')
                                 with gr.Row():
                                     run_button = gr.Button('Run Generation', variant="primary")
-                                    copy_button = gr.Button('Sent to SR model', variant="primary")
+                                    #copy_button = gr.Button('Sent to SR model', variant="primary")
                                 with gr.Tabs():
                                     with gr.TabItem('Text Prompt'):
                                         text = gr.Textbox(value="A fantasy landscape, trending on artstation.",
@@ -128,10 +130,10 @@ def main():
                                 width = gr.Slider(512,
                                                     960,
                                                     step=64,
-                                                    value=960,
+                                                    value=512,
                                                     label='width')
-                                height = gr.Slider(512,
-                                                    576,
+                                height = gr.Slider(384,
+                                                    512,
                                                     step=64,
                                                     value=512,
                                                     label='height')
@@ -162,9 +164,7 @@ def main():
                     with gr.Group():
                         #translated_text = gr.Textbox(label='Translated Text')
                         with gr.Tabs():
-                            with gr.TabItem('Output (Gallery)'):
-                                result_gallery = gr.Gallery(labels="Images", elem_id="sd_outputs").style(grid=[2,2])
-                            with gr.TabItem('Output (Grid View)'):
+                            with gr.TabItem('Output'):
                                 result_grid = gr.Image(show_label=False)
 
                 run_button.click(fn=model.run_with_prompt,
@@ -178,33 +178,33 @@ def main():
                                     steps,
                                     strength,
                                     None if not init_img else init_img,
+                                    result_grid,
                                 ],
                                 outputs=[
                                     result_grid,
-                                    result_gallery,
                                 ])
 
-            with gr.TabItem('Super Resolution!', id="sr_tab"):
-                with gr.Column():
-                    SR_input_img = gr.Image(type="pil", label="SR input image here", elem_id="sr_input")
-                    SR_button = gr.Button('Run SR', variant="primary")
-                with gr.Column():
-                    SR_result = gr.Image(show_label=False)
+            #with gr.TabItem('Super Resolution!', id="sr_tab"):
+                #with gr.Column():
+                    #SR_input_img = gr.Image(type="pil", label="SR input image here", elem_id="sr_input")
+                    #SR_button = gr.Button('Run SR', variant="primary")
+                #with gr.Column():
+                    #SR_result = gr.Image(show_label=False)
  
-                SR_button.click(fn=SR_model.run,
-                                inputs=[
-                                    SR_input_img,
-                                ],
-                                outputs=[
-                                    SR_result,
-                                ])
-                copy_button.click(fn=copy_img_to_sr,
-                                inputs=[result_gallery],
-                                outputs=[SR_input_img, tabs],
-                                _js=call_JS("moveImageFromGallery",
-                                            fromId="sd_outputs",
-                                            toId="sr_input")
-                                )
+                #SR_button.click(fn=SR_model.run,
+                                #inputs=[
+                                    #SR_input_img,
+                                #],
+                                #outputs=[
+                                    #SR_result,
+                                #])
+                #copy_button.click(fn=copy_img_to_sr,
+                                #inputs=[result_gallery],
+                                #outputs=[SR_input_img, tabs],
+                                #_js=call_JS("moveImageFromGallery",
+                                            #fromId="sd_outputs",
+                                            #toId="sr_input")
+                                #)
         load_detector = gr.Number(value=0, label="Load Detector", visible=False)
         load_detector.change(None, None, None, _js=js())
         demo.load(lambda x: 42, inputs=load_detector, outputs=load_detector)

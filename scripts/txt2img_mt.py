@@ -17,7 +17,7 @@ from ldm.models.diffusion.ddim import DDIMSampler
 from ldm.models.diffusion.plms import PLMSSampler
 
 import musa_torch_extension
-# from torch.profiler import profile, record_function, ProfilerActivity 
+from torch.profiler import profile, record_function, ProfilerActivity 
 
 
 def chunk(it, size):
@@ -229,9 +229,9 @@ def main():
 
     precision_scope = autocast if opt.precision=="autocast" else nullcontext
 
-    #with profile(activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA], 
+    #with profile(activities=[ProfilerActivity.CPU], 
                         #profile_memory=False, record_shapes=False, 
-                        #on_trace_ready=torch.profiler.tensorboard_trace_handler('./logs_profiling_cpu'), with_stack=False) as prof:
+                        #on_trace_ready=torch.profiler.tensorboard_trace_handler('./logs_profiling_mtgpu'), with_stack=False) as prof:
 
     with torch.no_grad():
         with torch.autograd.inference_mode(mode=True):

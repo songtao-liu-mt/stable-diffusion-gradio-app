@@ -16,15 +16,12 @@ from contextlib import contextmanager, nullcontext
 from ldm.util import instantiate_from_config
 from ldm.models.diffusion.ddim import DDIMSampler
 from ldm.models.diffusion.plms import PLMSSampler
+import musa_torch_extension
 
 
 def chunk(it, size):
     it = iter(it)
     return iter(lambda: tuple(islice(it, size)), ())
-
-def torch_gc():
-    torch.cuda.empty_cache()
-    torch.cuda.ipc_collect()
 
 
 def load_model_from_config(config, ckpt, verbose=False):
@@ -42,8 +39,6 @@ def load_model_from_config(config, ckpt, verbose=False):
         print("unexpected keys:")
         print(u)
 
-    model.cuda()
-    model.half()
     model.eval()
     return model
 
@@ -62,9 +57,11 @@ class AppModel():
         self.config = OmegaConf.load("configs/stable-diffusion/v1-inference.yaml")
         self.model = load_model_from_config(self.config, "models/ldm/stable-diffusion-v1/model.ckpt")
 
-        device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+        device = "mtgpu"
+        #device = "cpu"
         self.device = device
         self.model = self.model.to(device)
+        self.model.cond_stage_model.device = device
 
         self.sampler = PLMSSampler(self.model)
         self.img_sampler = DDIMSampler(self.model)
@@ -72,8 +69,7 @@ class AppModel():
         self.C = 4 # latent channels
         self.f = 8 # downsampling factors
 
-    def run_with_prompt(self, seed, prompt, n_samples, W, H, scale, ddim_steps,  strength=0., init_img=None):
-        torch_gc()
+    def run_with_prompt(self, seed, prompt, n_samples, W, H, scale, ddim_steps,  strength=0., init_img=None, result_grid):
         seed_everything(seed)
         ddim_eta=0.0
 
@@ -86,14 +82,12 @@ class AppModel():
 
         n_rows = int(n_samples**0.5)
 
-        precision_scope = autocast 
         if init_img is None:
             with torch.no_grad():
-                with precision_scope(device_type='cuda', dtype=torch.float16):
+                with torch.autograd.inference_mode(mode=True):
                     with self.model.ema_scope():
                         all_samples = list()
                         for prompts in tqdm(data, desc="data"):
-                            torch_gc()
                             uc = None
                             if scale != 1.0:
                                 uc = self.model.get_learned_conditioning(batch_size * [""])
@@ -127,16 +121,14 @@ class AppModel():
                         # to image
                         grid = 255. * rearrange(grid, 'c h w -> h w c').cpu().numpy()
                         grid = grid.astype(np.uint8)
-                        torch_gc()
 
                         return grid, all_samples
         else:
-            init_image = load_img(init_img, W, H).to(self.device)
+            init_image = load_img(init_img, W, H)
             init_image = repeat(init_image, '1 ... -> b ...', b=batch_size)
-            torch_gc()
-            with precision_scope(device_type='cuda', dtype=torch.float16):
+            init_image = init_image.to(self.device)
+            with torch.autograd.inference_mode(mode=True):
                 init_latent = self.model.get_first_stage_encoding(self.model.encode_first_stage(init_image))  # move to latent space
-            torch_gc()
 
             sampler = self.img_sampler
 
@@ -147,7 +139,7 @@ class AppModel():
             print(f"target t_enc is {t_enc} steps")
 
             with torch.no_grad():
-                with precision_scope(device_type='cuda', dtype=torch.float16):
+                with torch.autograd.inference_mode(mode=True):
                     with self.model.ema_scope():
                         all_samples = list()
                         for prompts in tqdm(data, desc="data"):
@@ -180,7 +172,6 @@ class AppModel():
                         # to image
                         grid = 255. * rearrange(grid, 'c h w -> h w c').cpu().numpy()
                         grid = grid.astype(np.uint8)
-                        torch_gc()
                         return grid, all_samples
             
 
