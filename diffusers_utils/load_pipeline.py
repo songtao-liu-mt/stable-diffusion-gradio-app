@@ -5,8 +5,9 @@ import torch
 import gc
 import logging
 from mt_filter.sensewords import ChineseFilter, EnglishFilter
+from PIL import Image
 
-device = "cuda:5"
+device = "cuda"
 
 class DummySafeChecker():
     def __init__(self,):
@@ -64,7 +65,7 @@ class Translator:
         translation = self.model.generate(**tokenized_text)
         return self.tokenizer.batch_decode(translation, skip_special_tokens=False)[0]
 translator_zh2en = Translator(model_path='models/opus_mt')
-
+logo_image_pil = Image.open('mt_logos/maliang_mt_logo.png').convert('RGB')
 gc.collect()
 torch.cuda.empty_cache()
 torch.cuda.ipc_collect()

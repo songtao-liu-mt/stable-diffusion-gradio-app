@@ -3,11 +3,6 @@
 # @time: 2022/10/11 
 # @Author: czx
 import jieba
-import os
-import sys
-# __dir__ = os.path.dirname(__file__)
-# sys.path.append(__dir__)
-# print(sys.path[-1])
 from mt_filter.uniform.utils import uniform, remove_punctuation
 from .getdicts import load_dict
 
@@ -26,7 +21,7 @@ class SenseFilter:
 
     def get_tokens(self, sent):
         if self.english:
-            tokens = sent.split(' ')
+            tokens = sent.split('')
         else:
             tokens = [x[0] for x in list(jieba.tokenize(sent))]
         return tokens

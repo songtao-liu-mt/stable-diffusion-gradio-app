@@ -20,7 +20,7 @@ import gradio as gr
 
 __dir__ = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(__dir__)
-from diffusers_func import inpaint_predict, outpaint_predict, multi2image_predict, text2image_predict, variance_predict
+from diffusers_func import inpaint_predict, outpaint_predict, multi2image_predict, variance_predict, RealESGAN_warp
 
 DESCRIPTION = '''# 摩尔线程马良 AIGC 创作平台
 '''
@@ -129,7 +129,8 @@ def cp_to_original(img):
         button_update_1 = gr.Button.update(value='运行生成')
         button_update_2 = gr.Button.update(visible=False)
         button_update_3 = gr.Button.update(visible=True)
-        return img, button_update_1, button_update_2, button_update_3
+        result_img = gr.Image.update(value=img)
+        return result_img, button_update_1, button_update_2, button_update_3
     except IndexError:
         return [None] * 4
     
@@ -145,26 +146,7 @@ def cp_to_original_inpaint(img):
     
 def change_status():
     return gr.Text.update(value="重新生成")   
-class RealESGAN_warp:
-    def __init__(self, model):
-        self.model = model
 
-    def run(self, image):
-        
-        assert image is not None, "Input image should not be None"
-        if isinstance(image, str):
-            image_data = re.sub('^data:image/.+;base64,', '', image)
-            image = Image.open(BytesIO(base64.b64decode(image_data)))
-        elif isinstance(image, np.ndarray):
-            image = Image.fromarray(image)
-        image = image.convert("RGB")
-        print('start hr convert...')
-        output, img_mode = self.model.enhance(np.array(image, dtype=np.uint8))
-        res = Image.fromarray(output)
-        print('finished.')
-        tab_update = gr.update(selected='hr_tab')
-            
-        return image, res, tab_update
 
 
 def main():
@@ -253,6 +235,7 @@ def main():
                                     with gr.Row():
                                         confirm_button = gr.Button(visible=False)
                                         hr_button = gr.Button('生成高清图像', variant="primary", visible=False)
+                                result_gallery_ori = gr.Gallery(labels="Images", elem_id="ori_outputs", show_label=False, visible=False)
                                 result_gallery = gr.Gallery(labels="Images", elem_id="sd_outputs", show_label=False).style(grid=[2,2])
                             with gr.TabItem('超分辨率', id='hr_tab'):
                                 with gr.TabItem('高清图像'):
@@ -276,6 +259,7 @@ def main():
                                 ],
                                 outputs=[
                                     result_grid,
+                                    result_gallery_ori,
                                     result_gallery,
                                     run_button,
                                     hr_button,
@@ -284,10 +268,8 @@ def main():
                                 )
                 
                 hr_button.click(fn=SR_model.run,
-                                inputs=[result_gallery],
+                                inputs=[result_gallery_ori],
                                 outputs=[low_image, hr_image, result_tabs_sd],
-                                # scroll_to_output=True,
-                                status_tracker=gr.components.StatusTracker(),
                                 _js=call_JS("moveImageFromGallery",
                                             fromId="sd_outputs",
                                             toId="hr_outputs")
@@ -355,6 +337,7 @@ def main():
                                         gr.Markdown('选择一张图片并点击 “超分” 生成高清图像')
                                     with gr.Row():
                                         hr_button = gr.Button('生成高清图像', variant="primary", visible=False)
+                                result_gallery_ori = gr.Gallery(labels="Images", elem_id="ori_variance_outputs", show_label=False, visible=False)
                                 result_gallery = gr.Gallery(labels="Images", elem_id="variance_outputs", show_label=False).style(grid=[2,2])
                             with gr.TabItem('超分辨率', id='hr_tab'):
                                 with gr.TabItem('高清图像'):
@@ -377,11 +360,12 @@ def main():
                                 ],
                                 outputs=[
                                     result_grid,
+                                    result_gallery_ori,
                                     result_gallery,
                                     hr_button
                                 ])     
                 hr_button.click(fn=SR_model.run,
-                                inputs=[result_gallery],
+                                inputs=[result_gallery_ori],
                                 outputs=[low_image, hr_image, result_tabs_variance],
                                 _js=call_JS("moveImageFromGallery",
                                             fromId="variance_outputs",
@@ -449,6 +433,7 @@ def main():
                                     with gr.Row():
                                         confrim_button = gr.Button(visible=False)
                                         hr_button = gr.Button('生成高清图像', variant="primary", visible=False)
+                                result_gallery_ori = gr.Gallery(labels="Images", elem_id="ori_sketch_outputs", show_label=False, visible=False)
                                 result_gallery = gr.Gallery(labels="Images", elem_id="sketch_outputs", show_label=False).style(grid=[2,2])
                             with gr.TabItem('超分辨率', id='hr_tab'):
                                 with gr.TabItem('高清图像'):
@@ -472,6 +457,7 @@ def main():
                                 ],
                                 outputs=[
                                     result_grid,
+                                    result_gallery_ori,
                                     result_gallery,
                                     run_button,
                                     hr_button,
@@ -479,7 +465,7 @@ def main():
                                 ])
                 
                 hr_button.click(fn=SR_model.run,
-                                inputs=[result_gallery],
+                                inputs=[result_gallery_ori],
                                 outputs=[low_image, hr_image, result_tabs_sketch],
                                 _js=call_JS("moveImageFromGallery",
                                             fromId="sketch_outputs",
@@ -546,6 +532,7 @@ def main():
                                     with gr.Row():
                                         confirm_button = gr.Button('确定', variant="primary", visible=False)
                                         hr_button = gr.Button('生成高清图像', variant="primary", visible=False) 
+                                result_gallery_ori = gr.Gallery(labels="Images", elem_id="ori_iterative_outputs", show_label=False, visible=False)
                                 result_gallery = gr.Gallery(labels="Images", elem_id="iterative_outputs", show_label=False).style(grid=[3,3])
                             with gr.TabItem('超分辨率', id='hr_tab'):
                                 with gr.TabItem('高清图像'):
@@ -570,6 +557,7 @@ def main():
                             ],
                             outputs=[
                                 result_grid,
+                                result_gallery_ori,
                                 result_gallery,
                                 run_button,
                                 confirm_button,
@@ -578,7 +566,7 @@ def main():
             
                 confirm_button.click(fn=cp_one_image_from_gallery_to_original,
                                     inputs=[
-                                        result_gallery
+                                        result_gallery_ori
                                     ],
                                     outputs=[
                                         init_img,
@@ -592,7 +580,7 @@ def main():
                                     )
                 
                 hr_button.click(fn=SR_model.run,
-                                inputs=[result_gallery],
+                                inputs=[result_gallery_ori],
                                 outputs=[low_image, hr_image, result_tabs_iteration],
                                 _js=call_JS("moveImageFromGallery",
                                             fromId="iterative_outputs",
@@ -652,7 +640,8 @@ def main():
                                     with gr.Row():
                                         confirm_button = gr.Button('确认', variant="primary", visible=False)
                                         hr_button = gr.Button('生成高清图像', variant="primary", visible=False)
-                                result_image = gr.Image(show_label=False, interactive=False)   
+                                result_image_ori = gr.Image(show_label=False, interactive=False, visible=False)  
+                                result_image = gr.Image(show_label=False, interactive=False)
                             with gr.TabItem('超分辨率', id='hr_tab'):
                                 with gr.TabItem('高清图像'):
                                     hr_image = gr.Image(labels="高清图像", show_label=False, id='hr_outputs') 
@@ -670,6 +659,7 @@ def main():
                                 lang
                             ],
                             outputs=[
+                                result_image_ori,
                                 result_image,
                                 run_button,
                                 confirm_button,
@@ -678,7 +668,7 @@ def main():
             
                 confirm_button.click(fn=cp_to_original,
                                     inputs=[
-                                        result_image
+                                        result_image_ori
                                     ],
                                     outputs=[
                                         init_img,
@@ -689,7 +679,7 @@ def main():
                                     )
                 
                 hr_button.click(fn=SR_model.run,
-                                    inputs=[result_image],
+                                    inputs=[result_image_ori],
                                     outputs=[low_image, hr_image, result_tabs_outpainting]
                                     ) 
                 
@@ -748,6 +738,7 @@ def main():
                                     with gr.Row():
                                         confirm_button = gr.Button('确认', variant="primary", visible=False)
                                         hr_button = gr.Button('生成高清图像', variant="primary", visible=False)
+                                result_image_ori = gr.Image(show_label=False, interactive=False, visible=False) 
                                 result_image = gr.Image(show_label=False, interactive=False)   
                             with gr.TabItem('超分辨率', id='hr_tab'):
                                 with gr.TabItem('高清图像'):
@@ -757,7 +748,7 @@ def main():
             
                 run_button.click(fn=outpaint_predict,
                             inputs=[
-                                init_img,
+                                None if not init_img else init_img,
                                 text_prompt,
                                 direction,
                                 expand_lenth,
@@ -768,6 +759,7 @@ def main():
                                 lang
                             ],
                             outputs=[
+                                result_image_ori, 
                                 result_image,
                                 run_button,
                                 confirm_button,
@@ -776,7 +768,7 @@ def main():
             
                 confirm_button.click(fn=cp_to_original,
                                     inputs=[
-                                        result_image
+                                        result_image_ori
                                     ],
                                     outputs=[
                                         init_img,
@@ -787,7 +779,7 @@ def main():
                                     )
                 
                 hr_button.click(fn=SR_model.run,
-                                    inputs=[result_image],
+                                    inputs=[result_image_ori],
                                     outputs=[low_image, hr_image, result_tabs_outpainting]
                                     ) 
         

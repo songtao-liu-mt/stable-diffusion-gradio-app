@@ -11,7 +11,7 @@ import json
 
 # 词典分为词、短语（句子、网址）
 # 统一中英文单词词典
-
+# todo: 网址识别，网址词典。短语是否作为自定义词典
 
 def is_token(x, english=False):
     if english:
