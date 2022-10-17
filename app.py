@@ -178,7 +178,6 @@ def main():
                                     steps,
                                     strength,
                                     None if not init_img else init_img,
-                                    result_grid,
                                 ],
                                 outputs=[
                                     result_grid,

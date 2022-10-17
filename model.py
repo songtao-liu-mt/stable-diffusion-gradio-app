@@ -69,7 +69,7 @@ class AppModel():
         self.C = 4 # latent channels
         self.f = 8 # downsampling factors
 
-    def run_with_prompt(self, seed, prompt, n_samples, W, H, scale, ddim_steps,  strength=0., init_img=None, result_grid):
+    def run_with_prompt(self, seed, prompt, n_samples, W, H, scale, ddim_steps,  strength=0., init_img=None):
         seed_everything(seed)
         ddim_eta=0.0
 
@@ -113,16 +113,7 @@ class AppModel():
                                 image = Image.fromarray(x_sample.astype(np.uint8))
                                 all_samples.append(image)
 
-                        # additionally, grid image
-                        grid = torch.stack([x_samples_ddim], 0)
-                        grid = rearrange(grid, 'n b c h w -> (n b) c h w')
-                        grid = make_grid(grid, nrow=n_rows)
-
-                        # to image
-                        grid = 255. * rearrange(grid, 'c h w -> h w c').cpu().numpy()
-                        grid = grid.astype(np.uint8)
-
-                        return grid, all_samples
+                        return all_samples[0]
         else:
             init_image = load_img(init_img, W, H)
             init_image = repeat(init_image, '1 ... -> b ...', b=batch_size)
@@ -164,15 +155,7 @@ class AppModel():
                                 image = Image.fromarray(x_sample.astype(np.uint8))
                                 all_samples.append(image)
 
-                        # additionally, save as grid
-                        grid = torch.stack([x_samples], 0)
-                        grid = rearrange(grid, 'n b c h w -> (n b) c h w')
-                        grid = make_grid(grid, nrow=n_rows)
-
-                        # to image
-                        grid = 255. * rearrange(grid, 'c h w -> h w c').cpu().numpy()
-                        grid = grid.astype(np.uint8)
-                        return grid, all_samples
+                        return all_samples[0]
             
 
 
