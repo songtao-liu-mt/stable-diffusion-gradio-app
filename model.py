@@ -69,7 +69,7 @@ class AppModel():
         self.C = 4 # latent channels
         self.f = 8 # downsampling factors
 
-    def run_with_prompt(self, seed, prompt, n_samples, W, H, scale, ddim_steps,  strength=0., init_img=None):
+    def run_with_prompt(self, seed, prompt, n_samples, W, H, scale, ddim_steps,  strength=0., init_img=None, call_back=None, log_t=1):
         seed_everything(seed)
         ddim_eta=0.0
 
@@ -78,9 +78,7 @@ class AppModel():
         batch_size = n_samples
         data = [batch_size * [prompt]]
 
-        start_code = None
-
-        n_rows = int(n_samples**0.5)
+        start_code = torch.randn([n_samples, self.C, H // self.f, W // self.f]).to(self.device)
 
         if init_img is None:
             with torch.no_grad():
@@ -103,7 +101,9 @@ class AppModel():
                                                             unconditional_guidance_scale=scale,
                                                             unconditional_conditioning=uc,
                                                             eta=ddim_eta,
-                                                            x_T=start_code)
+                                                            x_T=start_code, 
+                                                            img_callback=call_back,
+                                                            log_every_t=int(log_t))
 
                             x_samples_ddim = self.model.decode_first_stage(samples_ddim)
                             x_samples_ddim = torch.clamp((x_samples_ddim + 1.0) / 2.0, min=0.0, max=1.0)

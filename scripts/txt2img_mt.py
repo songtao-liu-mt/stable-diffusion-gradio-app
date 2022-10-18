@@ -18,7 +18,7 @@ from ldm.models.diffusion.plms import PLMSSampler
 
 import musa_torch_extension
 from torch.profiler import profile, record_function, ProfilerActivity 
-
+from sd_utils import *
 
 def chunk(it, size):
     it = iter(it)
@@ -202,6 +202,8 @@ def main():
     else:
         sampler = DDIMSampler(model)
 
+    sampler = KDiffusionSampler(model,'euler')
+
     os.makedirs(opt.outdir, exist_ok=True)
     outpath = opt.outdir
 
@@ -223,9 +225,9 @@ def main():
     base_count = len(os.listdir(sample_path))
     grid_count = len(os.listdir(outpath)) - 1
 
-    start_code = None
-    if opt.fixed_code:
-        start_code = torch.randn([opt.n_samples, opt.C, opt.H // opt.f, opt.W // opt.f], device=device)
+    #start_code = None
+    #if opt.fixed_code:
+    start_code = torch.randn([opt.n_samples, opt.C, opt.H // opt.f, opt.W // opt.f]).to(device)
 
     precision_scope = autocast if opt.precision=="autocast" else nullcontext
 

@@ -1,0 +1,90 @@
+/*
+This file is part of stable-diffusion-webui (https://github.com/sd-webui/stable-diffusion-webui/).
+
+Copyright 2022 sd-webui team.
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+[data-testid="image"] {min-height: 512px !important}
+* #body>.col:nth-child(2){
+    width:250%;
+    max-width:89vw
+}
+
+#increment_btn_minus {
+    align-self: center;
+    background: none;
+    border: none;
+}
+#increment_btn_plus {
+    align-self: center;
+    background: none;
+    border: none;
+}
+#prompt_input, #img2img_prompt_input {
+    padding: 0px;
+    border: none;
+}
+
+#prompt_row input,
+#prompt_row textarea {
+    font-size: 1.2rem;
+    line-height: 1.6rem;
+}
+
+input[type=number]:disabled { -moz-appearance: textfield; }
+
+#generate, #img2img_mask_btn, #img2img_edit_btn {
+    align-self: stretch;
+}
+
+#gan_image {
+    width: 512px;
+    height: auto;
+}
+
+[id$="highlight"]{
+ font-size: 1.2rem
+ }
+[id$="highlight"] .uppercase{
+    text-transform: initial;
+
+}
+[id$="highlight"] .textfield .textspan:nth-child(1){
+    font-size: 1.2rem
+}
+
+/* Mobile fixes and styles */
+@media only screen and (max-width: 768px) {
+    /* rearrange the columns on mobile */
+
+    #body>.col:nth-child(2){
+        width:100%;
+        max-width:100vw;
+        order: 1;
+    }
+    #body>.col:nth-child(1){
+        order: 2;
+    }
+    #body>.col:nth-child(3){
+        order: 3;
+    }
+
+    #txt2img_actions_row,
+    #txt2img_output_row{
+        flex-direction: row;
+        flex-wrap: wrap-reverse;
+    }
+    /* fix buttons layouts */
+
+}
