@@ -55,7 +55,7 @@ def load_img(image, W, H):
 class AppModel():
     def __init__(self,):
         self.config = OmegaConf.load("configs/stable-diffusion/v1-inference.yaml")
-        self.model = load_model_from_config(self.config, "models/ldm/stable-diffusion-v1/model.ckpt")
+        self.model = load_model_from_config(self.config, "weights/sd-v1-4.ckpt")
 
         device = "mtgpu"
         #device = "cpu"
