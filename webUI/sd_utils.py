@@ -95,17 +95,6 @@ if not "defaults" in st.session_state:
 
 st.session_state["defaults"] = OmegaConf.load("configs/webui/webui_streamlit.yaml")
 
-if (os.path.exists("configs/webui/userconfig_streamlit.yaml")):
-    user_defaults = OmegaConf.load("configs/webui/userconfig_streamlit.yaml")
-    try:
-        st.session_state["defaults"] = OmegaConf.merge(st.session_state["defaults"], user_defaults)
-    except KeyError:
-        st.experimental_rerun()
-else:
-    OmegaConf.save(config=st.session_state.defaults, f="configs/webui/userconfig_streamlit.yaml")
-    loaded = OmegaConf.load("configs/webui/userconfig_streamlit.yaml")
-    assert st.session_state.defaults == loaded
-
 if (os.path.exists(".streamlit/config.toml")):
     st.session_state["streamlit_config"] = toml.load(".streamlit/config.toml")
 
@@ -719,17 +708,33 @@ class KDiffusionSampler:
         self.schedule = sampler
     def get_sampler_name(self):
         return self.schedule
-    def sample(self, S, conditioning, batch_size, shape, verbose, unconditional_guidance_scale, unconditional_conditioning, eta, x_T, img_callback=None, log_every_t=None):
-        sigmas = self.model_wrap.get_sigmas(S)
-        x = x_T * sigmas[0]
-        model_wrap_cfg = CFGDenoiser(self.model_wrap)
-        samples_ddim = None
-        samples_ddim = K.sampling.__dict__[f'sample_{self.schedule}'](model_wrap_cfg, x, sigmas,
-                                                                              extra_args={'cond': conditioning, 'uncond': unconditional_conditioning,
-                                                                                          'cond_scale': unconditional_guidance_scale}, disable=False, callback=img_callback)
-        #
+    def sample(self, S, conditioning, batch_size, shape, verbose, unconditional_guidance_scale, 
+               unconditional_conditioning, eta, x_T, img_callback=None, log_every_t=None, init_latent=None, t_enc=0):
+        if init_latent is None:
+            sigmas = self.model_wrap.get_sigmas(S)
+            x = x_T * sigmas[0]
+            model_wrap_cfg = CFGDenoiser(self.model_wrap)
+            samples_ddim = None
+            samples_ddim = K.sampling.__dict__[f'sample_{self.schedule}'](model_wrap_cfg, x, sigmas,
+                                                                                extra_args={'cond': conditioning, 'uncond': unconditional_conditioning,
+                                                                                            'cond_scale': unconditional_guidance_scale}, disable=False, callback=img_callback)
+        else:
+            t_enc_steps = t_enc
+            z_mask = None
+            if S == t_enc_steps:
+                t_enc_steps = t_enc_steps - 1
+            sigmas = self.model_wrap.get_sigmas(S)
+            noise = x_T * sigmas[S - t_enc_steps - 1]
+            xi = init_latent + noise
+            sigma_sched = sigmas[S - t_enc_steps - 1:]
+            model_wrap_cfg = CFGMaskedDenoiser(self.model_wrap)
+            samples_ddim = K.sampling.__dict__[f'sample_{self.schedule}'](model_wrap_cfg, xi, sigma_sched,
+												   extra_args={'cond': conditioning, 'uncond': unconditional_conditioning,
+													       'cond_scale': unconditional_guidance_scale, 'mask': z_mask, 'x0': init_latent, 'xi': xi}, disable=False,
+												   callback=img_callback)
+
         return samples_ddim, None
-#
+
 @torch.no_grad()
 def log_likelihood(model, x, sigma_min, sigma_max, extra_args=None, atol=1e-4, rtol=1e-4):
     extra_args = {} if extra_args is None else extra_args
@@ -922,21 +927,13 @@ def generation_callback(img, i=0):
     # Show a progress bar so we can keep track of the progress even when the image progress is not been shown,
     # Dont worry, it doesnt affect the performance.
     if st.session_state["generation_mode"] == "txt2img":
-        percent = int(100 * float(i+1 if i+1 < st.session_state.sampling_steps else st.session_state.sampling_steps)/float(st.session_state.sampling_steps))
-        st.session_state["progress_bar_text"].text(
-                    f"Running step: {i+1 if i+1 < st.session_state.sampling_steps else st.session_state.sampling_steps}/{st.session_state.sampling_steps} {percent if percent < 100 else 100}%")
-    else:
-        if st.session_state["generation_mode"] == "img2img":
-            round_sampling_steps = round(st.session_state.sampling_steps * st.session_state["denoising_strength"])
-            percent = int(100 * float(i+1 if i+1 < round_sampling_steps else round_sampling_steps)/float(round_sampling_steps))
-            st.session_state["progress_bar_text"].text(
-                            f"""Running step: {i+1 if i+1 < round_sampling_steps else round_sampling_steps}/{round_sampling_steps} {percent if percent < 100 else 100}%""")
+        if st.session_state["strength"] > 0:
+            round_sampling_steps = round(st.session_state.sampling_steps * st.session_state["strength"])
         else:
-            if st.session_state["generation_mode"] == "txt2vid":
-                percent = int(100 * float(i+1 if i+1 < st.session_state.sampling_steps else st.session_state.sampling_steps)/float(st.session_state.sampling_steps))
-                st.session_state["progress_bar_text"].text(
-                                    f"Running step: {i+1 if i+1 < st.session_state.sampling_steps else st.session_state.sampling_steps}/{st.session_state.sampling_steps}"
-                                        f"{percent if percent < 100 else 100}%")
+            round_sampling_steps = st.session_state.sampling_steps
+        percent = int(100 * float(i+1 if i+1 < round_sampling_steps else round_sampling_steps)/float(round_sampling_steps))
+        st.session_state["progress_bar_text"].text(
+                        f"""Running step: {i+1 if i+1 < round_sampling_steps else round_sampling_steps}/{round_sampling_steps} {percent if percent < 100 else 100}%""")
 
     st.session_state["progress_bar"].progress(percent if percent < 100 else 100)
 

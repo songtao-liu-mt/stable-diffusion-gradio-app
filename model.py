@@ -80,7 +80,21 @@ class AppModel():
 
         start_code = torch.randn([n_samples, self.C, H // self.f, W // self.f]).to(self.device)
 
-        if init_img is None:
+        if not self.sampler.schedule == "ddim":
+            if init_img is not None:
+                init_image = load_img(init_img, W, H)
+                init_image = repeat(init_image, '1 ... -> b ...', b=batch_size)
+                init_image = init_image.to(self.device)
+                with torch.no_grad():
+                    with torch.autograd.inference_mode(mode=True):
+                        init_latent = self.model.get_first_stage_encoding(self.model.encode_first_stage(init_image))  # move to latent space
+
+                assert 0. <= strength < 1., 'can only work with strength in [0.0, 1.0)'
+                t_enc = int(strength * ddim_steps)
+            else:
+                init_latent = None
+                t_enc = 1
+                
             with torch.no_grad():
                 with torch.autograd.inference_mode(mode=True):
                     with self.model.ema_scope():
@@ -103,7 +117,9 @@ class AppModel():
                                                             eta=ddim_eta,
                                                             x_T=start_code, 
                                                             img_callback=call_back,
-                                                            log_every_t=int(log_t))
+                                                            log_every_t=int(log_t),
+                                                            init_latent=init_latent,
+                                                            t_enc=t_enc)
 
                             x_samples_ddim = self.model.decode_first_stage(samples_ddim)
                             x_samples_ddim = torch.clamp((x_samples_ddim + 1.0) / 2.0, min=0.0, max=1.0)

@@ -215,7 +215,7 @@ def layout():
                         )
                 image_holder = st.empty()
                 if uploaded_images:
-                    image = Image.open(uploaded_images).convert('RGBA')
+                    image = Image.open(uploaded_images).convert('RGB')
                     new_img = image.resize((200, 200))
                     image_holder.image(new_img)
 
@@ -279,11 +279,15 @@ def layout():
                                                                             step=5,
                                                                             help="Frequency in steps at which the the preview image is updated. By default the frequency \
                                                                             is set to 10 step.")
-            strength = st.slider("Strenght:", min_value=0.1,
-                                  max_value=0.99,
-                                  step=0.01,
-                                  value=0.8,
-                                  help="How strongly the image should follow the prompt.")
+            if uploaded_images:
+                st.session_state["strength"] = st.slider("Strenght:", min_value=0.1,
+                                                max_value=0.99,
+                                                step=0.01,
+                                                value=0.8,
+                                                help="How strongly the image should follow the prompt.")
+            else:
+                st.session_state["strength"] = -1
+                
 
         with col2:
             #preview_tab, gallery_tab = st.tabs(["Preview", "Gallery"])
@@ -341,7 +345,7 @@ def layout():
                     raise Exception("Unknown sampler: " + sampler_name)
                 model.sampler = sampler
                 output_image = model.run_with_prompt(seed, prompt_img if uploaded_images else prompt, 1, 512, 384, 7.5, 
-                                                    st.session_state.sampling_steps, strength, image if uploaded_images else None, 
+                                                    st.session_state.sampling_steps, st.session_state["strength"], image if uploaded_images else None, 
                                                     generation_callback, st.session_state.update_preview_frequency)
                 st.session_state["preview_image"].image(output_image)
 
