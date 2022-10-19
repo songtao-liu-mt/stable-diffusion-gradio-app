@@ -11,7 +11,7 @@ import PIL
 import cv2
 import math
 import gc
-from diffusers_utils import paint_pipeline, image2image_pipeline, text2image_pipeline, translator_zh2en, deal_width_exceed_maxside, image_grid, GaussianBlur, device, MAX_SIDE, ChineseFilter, EnglishFilter, logo_image_pil
+from diffusers_utils import paint_pipeline, image2image_pipeline, text2image_pipeline, translator_zh2en, deal_width_exceed_maxside, image_grid, GaussianBlur, device, MAX_SIDE, ChineseFilter, EnglishFilter, logo_image_pil, forbidden_pil
 import gradio as gr
 import logging
 import re
@@ -19,15 +19,14 @@ from io import BytesIO
 import base64
 
 
-def generate_empty_content_image(w, h):
-    return Image.new(mode="RGB", size=(w, h), color="black")
+def generate_empty_content_image():
+    return forbidden_pil
     
-def check_prompt_to_empty_image(language_filter, prompt, image_size):
+def check_prompt_to_empty_image(language_filter, prompt):
     filter_dict = language_filter.filter(prompt)
     if '1' in filter_dict:
         logging.warn(filter_dict)
-        w, h = image_size
-        return generate_empty_content_image(w, h)
+        return generate_empty_content_image()
     else:
         logging.info(filter_dict)
         return None
@@ -73,11 +72,11 @@ def inpaint_predict(dict, prompt, steps=50, scale=7.5, strength=0.8, seed=42, la
     empty_image = None
     prompt = check_empty_text_prompt(prompt)
     if lang == '中文':
-        empty_image = check_prompt_to_empty_image(ChineseFilter, prompt, (w, h))
+        empty_image = check_prompt_to_empty_image(ChineseFilter, prompt)
         if empty_image:
             return empty_image, empty_image, button_update_1, button_update_2, button_update_3
         prompt = translator_zh2en(prompt)
-    empty_image = check_prompt_to_empty_image(EnglishFilter, prompt,(w, h) )
+    empty_image = check_prompt_to_empty_image(EnglishFilter, prompt)
     if empty_image:
         return empty_image, empty_image, button_update_1, button_update_2, button_update_3
     with autocast("cuda"):
@@ -104,11 +103,11 @@ def outpaint_predict(image, prompt, direction, expand_lenth, steps=50, scale=7.5
     empty_image = None
     prompt = check_empty_text_prompt(prompt)
     if lang == '中文':
-        empty_image = check_prompt_to_empty_image(ChineseFilter, prompt, (w, h))
+        empty_image = check_prompt_to_empty_image(ChineseFilter, prompt)
         if empty_image:
             return empty_image, empty_image, button_update_1, button_update_2, button_update_3
         prompt = translator_zh2en(prompt)
-    empty_image = check_prompt_to_empty_image(EnglishFilter, prompt, (w, h))
+    empty_image = check_prompt_to_empty_image(EnglishFilter, prompt)
     if empty_image:
         return empty_image, empty_image, button_update_1, button_update_2, button_update_3
     assert expand_lenth % 64 == 0
@@ -189,12 +188,12 @@ def multi2image_predict(init_img, prompt, width, height, steps=50, scale=7.5, st
     empty_image = None
     prompt = check_empty_text_prompt(prompt)
     if lang == '中文':
-        empty_image = check_prompt_to_empty_image(ChineseFilter, prompt, (width, height))
+        empty_image = check_prompt_to_empty_image(ChineseFilter, prompt)
         if empty_image:
             empty_images = [empty_image] * num_images
             return image_grid(empty_images), empty_images, empty_images, button_update_1, button_update_2, button_update_3
         prompt = translator_zh2en(prompt)
-    empty_image = check_prompt_to_empty_image(EnglishFilter, prompt, (width, height))
+    empty_image = check_prompt_to_empty_image(EnglishFilter, prompt)
     if empty_image:
         empty_images = [empty_image] * num_images
         return image_grid(empty_images), empty_images, empty_images, button_update_1, button_update_2, button_update_3
@@ -230,12 +229,12 @@ def variance_predict(prompt, width, height, steps=50, scale=7.5, strength=0.8, s
     empty_image = None
     prompt = check_empty_text_prompt(prompt)
     if lang == '中文':
-        empty_image = check_prompt_to_empty_image(ChineseFilter, prompt, (width, height))
+        empty_image = check_prompt_to_empty_image(ChineseFilter, prompt)
         if empty_image:
             empty_images = [empty_image] * num_images
             return image_grid(empty_images), empty_images, empty_images, button_update
         prompt = translator_zh2en(prompt)
-    empty_image = check_prompt_to_empty_image(EnglishFilter, prompt, (width, height))
+    empty_image = check_prompt_to_empty_image(EnglishFilter, prompt)
     if empty_image:
         empty_images = [empty_image] * num_images
         grids = image_grid(empty_images)
