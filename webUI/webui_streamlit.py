@@ -85,7 +85,7 @@ def layout():
 	st.set_page_config(page_title="Stable Diffusion Playground", layout="wide")
 	#app = st.HydraApp(title='Stable Diffusion WebUI', favicon="", sidebar_state="expanded",
 	                  #hide_streamlit_markers=True, allow_url_nav=True , clear_cross_app_sessions=False)
-	st.header('马良创作平台')
+	st.header('摩尔线程马良 AIGC 创作平台')
 
 	with st.empty():
 		# load css as an external file, function has an option to local or remote url. Potential use when running from cloud infra that might not have access to local path.

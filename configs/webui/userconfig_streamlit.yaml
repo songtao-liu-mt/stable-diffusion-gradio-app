@@ -40,7 +40,7 @@ general:
   enable_attention_slicing: false
   enable_minimal_memory_usage: false
   update_preview: true
-  update_preview_frequency: 10
+  update_preview_frequency: 5
 txt2img:
   prompt: null
   width:

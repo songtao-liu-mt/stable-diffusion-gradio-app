@@ -12,12 +12,28 @@ import time
 from pytorch_lightning import seed_everything
 from torch import autocast
 from contextlib import contextmanager, nullcontext
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 
 from ldm.util import instantiate_from_config
 from ldm.models.diffusion.ddim import DDIMSampler
 from ldm.models.diffusion.plms import PLMSSampler
 import musa_torch_extension
 
+class Translator:
+    def __init__(self, model_path):
+        self.tokenizer = AutoTokenizer.from_pretrained(model_path)
+        self.model = AutoModelForSeq2SeqLM.from_pretrained(model_path).to('cpu')
+    def __call__(self, text):
+        if text.find("a") > -1 or text.find("e") > -1 or text.find("o") >-1 \
+            or text.find("i") > -1 or text.find("u") > -1 or text.find("b") >-1 or text.find("c") > -1 \
+            or text.find("d") > -1 or text.find("f") > -1 or text.find("g") > -1:
+            return text
+
+        tokenized_text = self.tokenizer.prepare_seq2seq_batch([text], return_tensors='pt').to('cpu')
+        translation = self.model.generate(**tokenized_text)
+        return self.tokenizer.batch_decode(translation, skip_special_tokens=False)[0]
+
+translator_zh2en = Translator(model_path='models/opus_mt')
 
 def chunk(it, size):
     it = iter(it)
@@ -74,6 +90,7 @@ class AppModel():
         ddim_eta=0.0
 
         assert prompt is not None
+        prompt = translator_zh2en(prompt)
         print(f"Prompt: {prompt}")
         batch_size = n_samples
         data = [batch_size * [prompt]]

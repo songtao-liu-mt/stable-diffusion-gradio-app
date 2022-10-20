@@ -933,7 +933,7 @@ def generation_callback(img, i=0):
             round_sampling_steps = st.session_state.sampling_steps
         percent = int(100 * float(i+1 if i+1 < round_sampling_steps else round_sampling_steps)/float(round_sampling_steps))
         st.session_state["progress_bar_text"].text(
-                        f"""Running step: {i+1 if i+1 < round_sampling_steps else round_sampling_steps}/{round_sampling_steps} {percent if percent < 100 else 100}%""")
+                        f"""运行中: {i+1 if i+1 < round_sampling_steps else round_sampling_steps}/{round_sampling_steps} {percent if percent < 100 else 100}%""")
 
     st.session_state["progress_bar"].progress(percent if percent < 100 else 100)
 

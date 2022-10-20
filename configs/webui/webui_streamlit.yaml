@@ -60,7 +60,7 @@ general:
     enable_attention_slicing: False
     enable_minimal_memory_usage: False
     update_preview: True
-    update_preview_frequency: 10
+    update_preview_frequency: 5
 
 txt2img:
     prompt:
@@ -104,7 +104,7 @@ txt2img:
     default_sampler: "k_euler"
     separate_prompts: False
     update_preview: True
-    update_preview_frequency: 10
+    update_preview_frequency: 5
     normalize_prompt_weights: True
     save_individual_images: True
     save_grid: True
