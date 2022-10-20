@@ -213,7 +213,8 @@ def layout():
                 # create an empty container for the image, progress bar, etc so we can update it later and use session_state to hold them globally.
                 st.session_state["preview_image"] = st.empty()
 
-
+                st.session_state["progress_bar_text"] = st.empty()
+                st.session_state["progress_bar_text"].info("暂时没有结果展示, 请先开始生成图片")
 
                 st.session_state["progress_bar"] = st.empty()
 
@@ -222,10 +223,6 @@ def layout():
         with col2:
             #preview_tab, gallery_tab = st.tabs(["Preview", "Gallery"])
             results_tab,  = st.tabs(["结果展示", ])
-            with results_tab:
-                st.session_state["progress_bar_text"] = st.empty()
-                #st.session_state["progress_bar_text"].info("Nothing but crickets here, try generating something first.")
-                st.session_state["progress_bar_text"].info("暂时没有结果展示, 请先开始生成图片")
         
 
         if generate_button:
@@ -270,6 +267,7 @@ def layout():
             with col2:
                 #preview_tab, gallery_tab = st.tabs(["Preview", "Gallery"])
                 with results_tab:
+                    st.session_state["results_text"] = st.empty()
                     sdGallery([output_image])
 
         #history_tab,col1,col2,col3,PlaceHolder,col1_cont,col2_cont,col3_cont = st.session_state['historyTab']
