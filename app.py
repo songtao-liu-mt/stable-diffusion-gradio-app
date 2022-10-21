@@ -194,7 +194,7 @@ def main():
                                                         step=64,
                                                         value=512,
                                                         label='图像宽度')
-                                    height = gr.Slider(512,
+                                    height = gr.Slider(384,
                                                         576,
                                                         step=64,
                                                         value=512,
@@ -297,7 +297,7 @@ def main():
                                                         step=64,
                                                         value=512,
                                                         label='图像宽度')
-                                    height = gr.Slider(512,
+                                    height = gr.Slider(384,
                                                         576,
                                                         step=64,
                                                         value=512,
@@ -392,7 +392,7 @@ def main():
                                                         step=64,
                                                         value=512,
                                                         label='图像宽度')
-                                    height = gr.Slider(512,
+                                    height = gr.Slider(384,
                                                         576,
                                                         step=64,
                                                         value=512,
@@ -494,7 +494,7 @@ def main():
                                                         step=64,
                                                         value=512,
                                                         label='图像宽度')
-                                    height = gr.Slider(512,
+                                    height = gr.Slider(384,
                                                         576,
                                                         step=64,
                                                         value=512,
