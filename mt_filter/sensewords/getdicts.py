@@ -13,17 +13,21 @@ import json
 # 统一中英文单词词典
 # todo: 网址识别，网址词典。短语是否作为自定义词典
 
+
 def is_token(x, english=False):
     if english:
         if len(x.split()) > 1:
             return False
-        else:
+        elif len(x.split()) == 1:
             return True
+        else:
+            # 空
+            return False
     # chinese
     else:
         if len(x) <= 3:
             return True
-        elif chinese_string_len(x) <= 2 and len(x) < 10:
+        elif 1 <= chinese_string_len(x) <= 2 and len(x) < 10:
             return True
         return False
 
@@ -48,7 +52,13 @@ def get_dict_words(input_file, dict_file, english=False):
     else:
         word_dict = set()
 
-    with open(input_file, 'r') as f, open(dict_file, 'a+') as wf:
+    encoding = 'utf-16' if "涉枪涉爆违法信息关键词.txt" in input_file else 'utf-8'
+
+    with open(input_file, 'r', encoding=encoding) as f, open(dict_file, 'a+') as wf:
+        if input_file.endswith(".json"):
+            # 对words.json的处理
+            f = json.load(f)
+
         for x in f:
             # 大小写转换，全角半角转换
             x = uniform(x).strip('\n')
@@ -94,7 +104,8 @@ def get_dict_phrase(input_file, word_file, phrase_file, new_word_file, english=F
         phrase_dict = set()
 
     #
-    with open(input_file, 'r') as f, open(phrase_file, 'a+') as wf:
+    encoding = 'utf-16' if "涉枪涉爆违法信息关键词.txt" in input_file else 'utf-8'
+    with open(input_file, 'r', encoding=encoding) as f, open(phrase_file, 'a+') as wf:
         if input_file.endswith(".json"):
             # 对words.json的处理
             f = json.load(f)
@@ -135,15 +146,13 @@ if __name__ == "__main__":
     files = os.listdir(input_dir)
 
     word_dict_file = "dicts/english_dict.txt"
-    new_word_dict = "./englist_phrase_dict.txt"
-    phrase_dict_file = "dicts/english_phrase.txt"
-
+    new_word_dict = "dicts/phrase_dict.txt"
+    phrase_dict_file = "dicts/chinese_phrase.txt"
 
     for x in files:
-        # if x == "网址.txt" or x == "涉枪涉爆违法信息关键词.txt":
-        #     continue
+        if x == "网址.txt":
+            continue
         input_file = os.path.join(input_dir, x)
         print('file is:', x)
         get_dict_words(input_file, word_dict_file, english=True)
-        get_dict_phrase(input_file, word_dict_file, phrase_dict_file, new_word_dict, english=True)
-
+        # get_dict_phrase(input_file, word_dict_file, phrase_dict_file, new_word_dict)

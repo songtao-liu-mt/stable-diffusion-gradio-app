@@ -10,7 +10,6 @@ from .filters import SenseFilter
 
 current_path = os.path.dirname(os.path.realpath(__file__))
 
-ChineseFilter = SenseFilter(os.path.join(current_path, "dicts/chinese_dict.txt"),
-                            os.path.join(current_path, "dicts/chinese_phrase.txt"))
+ChineseFilter = SenseFilter(os.path.join(current_path, "dicts/chinese_dict.txt"))
 EnglishFilter = SenseFilter(os.path.join(current_path, "./dicts/english_dict.txt"),
                             os.path.join(current_path, "./dicts/english_phrase.txt"), english=True)
