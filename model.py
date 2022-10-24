@@ -17,8 +17,13 @@ from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 from ldm.util import instantiate_from_config
 from ldm.models.diffusion.ddim import DDIMSampler
 from ldm.models.diffusion.plms import PLMSSampler
+from mt_filter.sensewords import ChineseFilter, EnglishFilter
+import logging
 import musa_torch_extension
 
+logging.basicConfig(filename="./filter.log", level=logging.INFO)
+#logger = logging.getLogger("app_filter_log.txt")
+forbidden_pil = Image.open('mt_images/forbidden_2048_1536_logo.jpg').resize((512, 384)).convert('RGB')
 zhPattern = re.compile(u'[\u4e00-\u9fa5]+')
 
 class Translator:
@@ -34,6 +39,25 @@ class Translator:
             return text
 
 translator_zh2en = Translator(model_path='models/opus_mt')
+
+class TextFilter:
+    def __init__(self):
+        self.zh_filter = ChineseFilter
+        self.en_filter = EnglishFilter
+
+    def __call__(self, text):
+        if zhPattern.search(text):
+            filter_dict = self.zh_filter.filter(text)
+        else:
+            filter_dict = self.en_filter.filter(text)
+
+        if '1' in filter_dict:
+            logging.info(filter_dict['1']+'  '+text)
+            return forbidden_pil
+        else:
+            return None
+
+prompt_filter = TextFilter()
 
 def chunk(it, size):
     it = iter(it)
@@ -90,6 +114,9 @@ class AppModel():
         ddim_eta=0.0
 
         assert prompt is not None
+        fb_img = prompt_filter(prompt)
+        if fb_img is not None:
+            return fb_img
         prompt = translator_zh2en(prompt)
         print(f"Prompt: {prompt}")
         batch_size = n_samples

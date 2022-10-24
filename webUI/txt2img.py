@@ -83,6 +83,19 @@ EXAMPLES = {
 "中文示例4":"超写实的女宇航员肖像，全身肖像，良好的照明，复杂的抽象。赛博朋克，错综复杂的艺术作品，高度细节，敏锐的焦点，复杂的概念艺术，数字绘画，环境照明，4k，艺术站",
 }
 
+LEXAMPLES = [
+"Concept art painting of a cozy village in a mountainous forested valley, historic english and japanese architecture, realistic, detailed, cel shaded, in the style of makoto shinkai and greg rutkowski and james gurney",
+
+"Amazon valkyrie athena, d & d, fantasy, portrait, highly detailed, headshot, digital painting, trending on artstation, concept art, sharp focus, illustration, art by artgerm and greg rutkowski and magali villeneuve",
+
+"Black haired little girl. her hair is very windy. she is in a black and white dress, that white dress has black triangles as a pattern. she is carrying a big glistening green diamond shaped crystal on her hands. art by artgerm and greg rutkowski and alphonse mucha and ian sprigger and wlop and krenz cushart",
+
+"一幅中国古代宫殿风景画的写实水彩画，远处是中国古代城墙的入口，背景是雾蒙蒙的山脉",
+
+"gta9游戏玩法，16k分辨率，超级未来主义的图像",
+
+"古埃及，繁荣，青翠的高科技城市，由greg rutkowski, alex grey创作的数字绘画，4k高清",
+]
 # Init Vuejs component
 _component_func = components.declare_component(
     "sd-gallery", "./frontend/dists/sd-gallery/dist")
@@ -122,25 +135,92 @@ class plugin_info():
     isTab = True
     displayPriority = 1
 
+
+st.session_state["text_v"] = ""
 def layout():
     st.session_state["generation_mode"] = "txt2img"
     #txt_tab,img_tab = st.tabs(["文字输入","图片输入"])
-    input_col1_txt, setting_col = st.columns([10, 10], gap="large")
+    st.markdown(
+    """
+    <style>
+        div[data-testid="column"]:nth-of-type(1)
+        {
+            text-align: end;
+            align-items: normal;
+        } 
+
+        div[data-testid="column"]:nth-of-type(2)
+        {
+            text-align: end;
+            align-items: flex-start;
+        } 
+    </style>
+    """,unsafe_allow_html=True
+)
+    input_col1_txt, example_col = st.columns([10, 10], gap="large")
+    def example(index):
+        st.session_state["text_v"] = LEXAMPLES[index]
+        #st.write(st.session_state.text_v)
+
+    with example_col:
+        #st.session_state.sampling_steps = st.number_input("生成步数", 
+                                                        #value=st.session_state.defaults.txt2img.sampling_steps.value,
+                                                        #min_value=st.session_state.defaults.txt2img.sampling_steps.min_value,
+                                                        #step=st.session_state['defaults'].txt2img.sampling_steps.step,
+                                                        #disabled=disable_text,
+                                                        #help="Set the default number of sampling steps to use. Default is: 30 (with k_euler)")
+
+        #sampler_name_list = ["k_lms", "k_euler", "k_euler_a", "k_dpm_2", "k_dpm_2_a",  "k_heun", "DDIM"]
+        #sampler_name = st.selectbox("采样方法", sampler_name_list,
+                                    #disabled=disable_text,
+                                    #index=sampler_name_list.index(st.session_state['defaults'].txt2img.default_sampler), help="Sampling method to use. Default: k_euler")
+        #seed = st.text_input("随机种子:", value=st.session_state['defaults'].txt2img.seed, 
+                            #disabled=disable_text,
+                            #help=" The seed to use, if left blank a random seed will be generated.")
+
+        #st.session_state["update_preview"] = st.session_state["defaults"].general.update_preview
+        #st.session_state["update_preview_frequency"] = st.number_input("预览频率",
+                                                                        #min_value=1,
+                                                                        #max_value=30,
+                                                                        #value=st.session_state['defaults'].txt2img.update_preview_frequency,
+                                                                        #step=5,
+                                                                        #disabled=disable_text,
+                                                                        #help="Frequency in steps at which the the preview image is updated. By default the frequency \
+                                                                        #is set to 10 step.")
+        ex1 = st.button("Concept art painting of a cozy village in a mountainous forested valley, historic english and japanese architecture, realistic, detailed, cel shaded,in the style of makoto shinkai and greg rutkowski and james gurney", on_click=example, kwargs={'index': 0})
+        ex2 = st.button("Amazon valkyrie athena, d & d, fantasy, portrait, highly detailed, headshot, digital painting, trending on artstation, concept art, sharp focus, illustration, art by artgerm and greg rutkowski and magali villeneuve", on_click=example, kwargs={'index': 1})
+        ex3 = st.button("Black haired little girl. her hair is very windy. she is in a black and white dress, that white dress has black triangles as a pattern. she is carrying a big glistening green diamond shaped crystal on her hands. art by artgerm and greg rutkowski and alphonse mucha and ian sprigger and wlop and krenz cushart", on_click=example, kwargs={'index': 2})
+        ex4 = st.button("一幅中国古代宫殿风景画的写实水彩画，远处是中国古代城墙的入口，背景是雾蒙蒙的山脉", on_click=example, kwargs={'index': 3})
+        ex5 = st.button("gta9游戏玩法，16k分辨率，超级未来主义的图像", on_click=example, kwargs={'index': 4})
+        ex6 = st.button("古埃及，繁荣，青翠的高科技城市，由greg rutkowski, alex grey创作的数字绘画，4k高清", on_click=example, kwargs={'index': 5})
+
+        st.markdown(
+            """
+            <style>
+            .stButton > button{
+                text-align: left;
+            }
+            </style>
+            """,unsafe_allow_html=True
+        )
+        st.session_state["update_preview_frequency"] = 5
 
     with input_col1_txt:
         #prompt = st.text_area("Input Text","")
-        example = st.selectbox("输入示例",
-                                ["无",
-                                 "英文示例1","英文示例2","英文示例3","英文示例4",
-                                 "中文示例1","中文示例2","中文示例3","中文示例4",],
-                                index=0,)
-        if example == "无":
-            text_v = ""
-        else:
-            text_v = EXAMPLES[example]
+        #example = st.selectbox("输入示例",
+                                #["无",
+                                #"英文示例1","英文示例2","英文示例3","英文示例4",
+                                #"中文示例1","中文示例2","中文示例3","中文示例4",],
+                                #index=0,)
+        #if example == "无":
+            #text_v = ""
+        #else:
+            #text_v = EXAMPLES[example]
         disable_text = False
+        if st.session_state.text_v is None:
+            st.session_state["text_v"] = ""
 
-        prompt = st.text_area("文字输入", text_v, placeholder="支持英文或者中文输入", height=150, disabled=disable_text)
+        prompt = st.text_area("文字输入", st.session_state["text_v"], placeholder="支持英文或者中文输入", height=150, disabled=disable_text)
     
         img_input = st.checkbox("图片输入（可选）", disabled=disable_text)
         uploaded_images = None
@@ -155,46 +235,28 @@ def layout():
             new_img = image.resize((128, 128))
             image_holder.image(new_img)
 
+    st.session_state.sampling_steps = 30
+    sampler_name = "k_euler"
+    seed = None
+    st.session_state["update_preview"] = True
+    st.session_state["update_preview_frequency"] = 5
+
+    if uploaded_images:
+        st.session_state["strength"] = 0.9
+        #st.session_state["strength"] = st.slider("文本权重", min_value=0.1,
+                                        #max_value=0.99,
+                                        #step=0.01,
+                                        #value=0.8,
+                                        #disabled=disable_text,
+                                        #help="How strongly the image should follow the prompt.")
+    else:
+        st.session_state["strength"] = -1
 
     # creating the page layout using columns
     #col1, col2, col3 = st.columns([1,2,1], gap="large")
 
-    with setting_col:
-        st.session_state.sampling_steps = st.number_input("生成步数", 
-                                                        value=st.session_state.defaults.txt2img.sampling_steps.value,
-                                                        min_value=st.session_state.defaults.txt2img.sampling_steps.min_value,
-                                                        step=st.session_state['defaults'].txt2img.sampling_steps.step,
-                                                        disabled=disable_text,
-                                                        help="Set the default number of sampling steps to use. Default is: 30 (with k_euler)")
-
-        sampler_name_list = ["k_lms", "k_euler", "k_euler_a", "k_dpm_2", "k_dpm_2_a",  "k_heun", "DDIM"]
-        sampler_name = st.selectbox("采样方法", sampler_name_list,
-                                    disabled=disable_text,
-                                    index=sampler_name_list.index(st.session_state['defaults'].txt2img.default_sampler), help="Sampling method to use. Default: k_euler")
-        seed = st.text_input("随机种子:", value=st.session_state['defaults'].txt2img.seed, 
-                            disabled=disable_text,
-                            help=" The seed to use, if left blank a random seed will be generated.")
-
-        st.session_state["update_preview"] = st.session_state["defaults"].general.update_preview
-        st.session_state["update_preview_frequency"] = st.number_input("预览频率",
-                                                                        min_value=1,
-                                                                        max_value=30,
-                                                                        value=st.session_state['defaults'].txt2img.update_preview_frequency,
-                                                                        step=5,
-                                                                        disabled=disable_text,
-                                                                        help="Frequency in steps at which the the preview image is updated. By default the frequency \
-                                                                        is set to 10 step.")
-        if uploaded_images:
-            st.session_state["strength"] = st.slider("文本权重", min_value=0.1,
-                                            max_value=0.99,
-                                            step=0.01,
-                                            value=0.8,
-                                            disabled=disable_text,
-                                            help="How strongly the image should follow the prompt.")
-        else:
-            st.session_state["strength"] = -1
-            
     with st.form("txt2img-outputs"):
+            
         generate, _ = st.columns([1, 12], gap="large")
         generate_button = generate.form_submit_button("开始生成")
         col1, col2, = st.columns([1,1], gap="large")
