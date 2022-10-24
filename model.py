@@ -1,4 +1,4 @@
-import argparse, os, sys, glob
+import argparse, os, sys, glob, re
 import torch
 import PIL
 import numpy as np
@@ -19,19 +19,19 @@ from ldm.models.diffusion.ddim import DDIMSampler
 from ldm.models.diffusion.plms import PLMSSampler
 import musa_torch_extension
 
+zhPattern = re.compile(u'[\u4e00-\u9fa5]+')
+
 class Translator:
     def __init__(self, model_path):
         self.tokenizer = AutoTokenizer.from_pretrained(model_path)
         self.model = AutoModelForSeq2SeqLM.from_pretrained(model_path).to('cpu')
     def __call__(self, text):
-        if text.find("a") > -1 or text.find("e") > -1 or text.find("o") >-1 \
-            or text.find("i") > -1 or text.find("u") > -1 or text.find("b") >-1 or text.find("c") > -1 \
-            or text.find("d") > -1 or text.find("f") > -1 or text.find("g") > -1:
+        if zhPattern.search(text):
+            tokenized_text = self.tokenizer.prepare_seq2seq_batch([text], return_tensors='pt').to('cpu')
+            translation = self.model.generate(**tokenized_text)
+            return self.tokenizer.batch_decode(translation, skip_special_tokens=False)[0]
+        else:
             return text
-
-        tokenized_text = self.tokenizer.prepare_seq2seq_batch([text], return_tensors='pt').to('cpu')
-        translation = self.model.generate(**tokenized_text)
-        return self.tokenizer.batch_decode(translation, skip_special_tokens=False)[0]
 
 translator_zh2en = Translator(model_path='models/opus_mt')
 
