@@ -26,7 +26,7 @@ from sd_utils import *
 import streamlit_nested_layout
 
 #streamlit components section
-from st_on_hover_tabs import on_hover_tabs
+#from st_on_hover_tabs import on_hover_tabs
 from streamlit_server_state import server_state, server_state_lock
 
 #other imports
@@ -40,14 +40,6 @@ if not "defaults" in st.session_state:
     st.session_state["defaults"] = {}
     
 st.session_state["defaults"] = OmegaConf.load("configs/webui/webui_streamlit.yaml")
-
-#if (os.path.exists("configs/webui/userconfig_streamlit.yaml")):
-    #user_defaults = OmegaConf.load("configs/webui/userconfig_streamlit.yaml")
-    #st.session_state["defaults"] = OmegaConf.merge(st.session_state["defaults"], user_defaults)
-#else:
-	#OmegaConf.save(config=st.session_state.defaults, f="configs/webui/userconfig_streamlit.yaml")
-	#loaded = OmegaConf.load("configs/webui/userconfig_streamlit.yaml")
-	#assert st.session_state.defaults == loaded		
 
 if (os.path.exists(".streamlit/config.toml")):
 	st.session_state["streamlit_config"] = toml.load(".streamlit/config.toml")
@@ -93,83 +85,24 @@ def layout():
 	st.set_page_config(page_title="Stable Diffusion Playground", layout="wide")
 	#app = st.HydraApp(title='Stable Diffusion WebUI', favicon="", sidebar_state="expanded",
 	                  #hide_streamlit_markers=True, allow_url_nav=True , clear_cross_app_sessions=False)
-	st.header('马良创作平台')
+	st.header('摩尔线程马良 AIGC 创作平台')
 
 	with st.empty():
 		# load css as an external file, function has an option to local or remote url. Potential use when running from cloud infra that might not have access to local path.
 		load_css(True, 'frontend/css/streamlit.main.css')
 		
-	# check if the models exist on their respective folders
-	# with server_state_lock["GFPGAN_available"]:
-		# if os.path.exists(os.path.join(st.session_state["defaults"].general.GFPGAN_dir, f"{st.session_state['defaults'].general.GFPGAN_model}.pth")):
-			# server_state["GFPGAN_available"] = True
-		# else:
-			# server_state["GFPGAN_available"] = False
-
-	# with server_state_lock["RealESRGAN_available"]:
-		# if os.path.exists(os.path.join(st.session_state["defaults"].general.RealESRGAN_dir, f"{st.session_state['defaults'].general.RealESRGAN_model}.pth")):
-			# server_state["RealESRGAN_available"] = True 
-		# else:
-			# server_state["RealESRGAN_available"] = False	
-
-	#with st.sidebar:		
-		#tabs = on_hover_tabs(tabName=['Stable Diffusion', "Textual Inversion","Model Manager","Settings"], 
-                        #iconName=['dashboard','model_training' ,'cloud_download', 'settings'], default_choice=0)
-		
-		# need to see how to get the icons to show for the hydralit option_bar				
-		#tabs = hc.option_bar([{'icon':'grid-outline','label':'Stable Diffusion'}, {'label':"Textual Inversion"},
-		                      #{'label':"Model Manager"},{'label':"Settings"}],
-		                     #horizontal_orientation=False,
-		                     #override_theme={'txc_inactive': 'white','menu_background':'#111', 'stVerticalBlock': '#111','txc_active':'yellow','option_active':'blue'})
-		
-		# set the page url and title
-	st.experimental_set_query_params(page='马良平台')
+	#st.experimental_set_query_params(page='马良平台')
 	try:
 		set_page_title("马良平台")
 	except NameError:
 		st.experimental_rerun()
 	
-	txt2img_tab, = st.tabs(["AI图像生成",])
-	#with home_tab:
-		#from home import layout
-		#layout()		
+	#txt2img_tab, = st.tabs(["AI图像生成",])
 	
-	with txt2img_tab:
-		from txt2img import layout
-		layout()
+	#with txt2img_tab:
+	from txt2img import layout
+	layout()
 	
-	#with img2img_tab:
-		#from img2img import layout
-		#layout()
-	
-	#with txt2vid_tab:
-		#from txt2vid import layout
-		#layout()
-		
-	#with img2txt_tab:
-		#from img2txt import layout
-		#layout()	
-		
-	#with concept_library_tab:
-		#from sd_concept_library import layout
-		#layout()			
-		
-	#
-	#elif tabs == 'Model Manager':
-		#set_page_title("Model Manager - Stable Diffusion Playground")
-		
-		#from ModelManager import layout
-		#layout()
-	
-	#elif tabs == 'Textual Inversion':		
-		#from textual_inversion import layout
-		#layout()
-		
-	#elif tabs == 'Settings':
-		#set_page_title("Settings - Stable Diffusion Playground")
-		
-		#from Settings import layout
-		#layout()
 	
 if __name__ == '__main__':
 	layout()     

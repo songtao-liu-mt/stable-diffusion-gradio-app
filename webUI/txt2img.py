@@ -65,6 +65,54 @@ except:
 #         url="http://localhost:3001",
 #     )
 
+EXAMPLES = {
+"英文示例1": "Concept art painting of a cozy village in a mountainous forested valley, historic english and japanese architecture, realistic, detailed, cel shaded, in the style of makoto shinkai and greg rutkowski and james gurney",
+
+"英文示例2": "Amazon valkyrie athena, d & d, fantasy, portrait, highly detailed, headshot, digital painting, trending on artstation, concept art, sharp focus, illustration, art by artgerm and greg rutkowski and magali villeneuve",
+
+"英文示例3": "Black haired little girl. her hair is very windy. she is in a black and white dress, that white dress has black triangles as a pattern. she is carrying a big glistening green diamond shaped crystal on her hands. art by artgerm and greg rutkowski and alphonse mucha and ian sprigger and wlop and krenz cushart",
+
+"英文示例4": "A chinese landscape painting of a building in a serene landscape",
+
+"中文示例1": "一只聪明的熊猫在喝可口可乐的电影海报，8k高清图片",
+
+"中文示例2": "一幅中国古代宫殿风景画的写实水彩画，远处是中国古代城墙的入口，背景是雾蒙蒙的山脉",
+
+"中文示例3": "一幅中国古代水墨画，画的是宁静的风景中的建筑",
+
+"中文示例4":"超写实的女宇航员肖像，全身肖像，良好的照明，复杂的抽象。赛博朋克，错综复杂的艺术作品，高度细节，敏锐的焦点，复杂的概念艺术，数字绘画，环境照明，4k，艺术站",
+}
+
+LEXAMPLES = [
+"Concept art painting of a cozy village in a mountainous forested valley, historic english and japanese architecture, realistic, detailed, cel shaded, in the style of makoto shinkai and greg rutkowski and james gurney",
+
+"Amazon valkyrie athena, d & d, fantasy, portrait, highly detailed, headshot, digital painting, trending on artstation, concept art, sharp focus, illustration, art by artgerm and greg rutkowski and magali villeneuve",
+
+"Black haired little girl. her hair is very windy. she is in a black and white dress, that white dress has black triangles as a pattern. she is carrying a big glistening green diamond shaped crystal on her hands. art by artgerm and greg rutkowski and alphonse mucha and ian sprigger and wlop and krenz cushart",
+
+"一幅中国古代宫殿风景画的写实水彩画，远处是中国古代城墙的入口，背景是雾蒙蒙的山脉",
+
+"gta9游戏玩法，16k分辨率，超级未来主义的图像",
+
+"古埃及，繁荣，青翠的高科技城市，由greg rutkowski, alex grey创作的数字绘画，4k高清",
+]
+
+GUIDENCE = '''为了更好地生成文本提示，从而生成优美的图片。文本输入通常遵循一定的原则。本篇将带领大家生成一个漂亮的文本输入。
+注意：为了净化网络环境，请慎重输入词汇，避免 **敏感词**。
+* **文本核心描述（必写）**
+文本核心描述为文本提示最核心的部分，也是必不可少的部分。一般这个不分需要至少一个核心主体名词加上一定数量的形容词汇，或者动作描述。例如：
+
+一只聪明的熊猫在喝可口可乐
+* **类型（必写）**
+类型也是文本必不可少的内容。通常来说，类型包括但不限于 照片、肖像、油画、草图、素描、电影海报、广告、3D渲染、图案等等
+以上两部分就可以醉成最简单的文本描述。例如：
+
+一只聪明的熊猫在喝可口可乐的电影海报
+
+除了以上两部分为必写内容，可以按照自己的想法加入图像的风格，主体的颜色，图像的纹理，图像分辨率，图像的类型，任务的情绪，所处的时代等等。简单的形式可以用逗号的形式分开。不同的顺序也会产生不同的结果。但是，每一个句子里的中文单字 + 英文单词 建议不要超过 77 个。
+
+'''
+
 # Init Vuejs component
 _component_func = components.declare_component(
     "sd-gallery", "./frontend/dists/sd-gallery/dist")
@@ -104,190 +152,141 @@ class plugin_info():
     isTab = True
     displayPriority = 1
 
-#
-def txt2img(prompt: str, ddim_steps: int, sampler_name: str, n_iter: int, batch_size: int, cfg_scale: float, seed: Union[int, str, None],
-            height: int = 512, width: int= 512, separate_prompts:bool = False, normalize_prompt_weights:bool = True,
-            save_individual_images: bool = True, save_grid: bool = True, group_by_prompt: bool = True,
-            save_as_jpg: bool = True, use_GFPGAN: bool = True, GFPGAN_model: str = 'GFPGANv1.3', use_RealESRGAN: bool = False,
-            RealESRGAN_model: str = "RealESRGAN_x4plus_anime_6B", use_LDSR: bool = True, LDSR_model: str = "model",
-            fp = None, variant_amount: float = None,
-            variant_seed: int = None, ddim_eta:float = 0.0, write_info_files:bool = True):
 
-    outpath = st.session_state['defaults'].general.outdir_txt2img
-
-    seed = seed_to_int(seed)
-
-    if sampler_name == 'PLMS':
-        sampler = PLMSSampler(server_state["model"])
-    elif sampler_name == 'DDIM':
-        sampler = DDIMSampler(server_state["model"])
-    elif sampler_name == 'k_dpm_2_a':
-        sampler = KDiffusionSampler(server_state["model"],'dpm_2_ancestral')
-    elif sampler_name == 'k_dpm_2':
-        sampler = KDiffusionSampler(server_state["model"],'dpm_2')
-    elif sampler_name == 'k_euler_a':
-        sampler = KDiffusionSampler(server_state["model"],'euler_ancestral')
-    elif sampler_name == 'k_euler':
-        sampler = KDiffusionSampler(server_state["model"],'euler')
-    elif sampler_name == 'k_heun':
-        sampler = KDiffusionSampler(server_state["model"],'heun')
-    elif sampler_name == 'k_lms':
-        sampler = KDiffusionSampler(server_state["model"],'lms')
-    else:
-        raise Exception("Unknown sampler: " + sampler_name)
-
-    def init():
-        pass
-
-    def sample(init_data, x, conditioning, unconditional_conditioning, sampler_name):
-        samples_ddim, _ = sampler.sample(S=ddim_steps, conditioning=conditioning, batch_size=int(x.shape[0]), shape=x[0].shape, verbose=False, unconditional_guidance_scale=cfg_scale,
-                                         unconditional_conditioning=unconditional_conditioning, eta=ddim_eta, x_T=x, img_callback=generation_callback,
-                                                 log_every_t=int(st.session_state.update_preview_frequency))
-
-        return samples_ddim
-
-    #try:
-    output_images, seed, info, stats = process_images(
-        outpath=outpath,
-                func_init=init,
-                func_sample=sample,
-                prompt=prompt,
-                seed=seed,
-                sampler_name=sampler_name,
-                save_grid=save_grid,
-                batch_size=batch_size,
-                n_iter=n_iter,
-                steps=ddim_steps,
-                cfg_scale=cfg_scale,
-                width=width,
-                height=height,
-                prompt_matrix=separate_prompts,
-                use_GFPGAN=st.session_state["use_GFPGAN"],
-                GFPGAN_model=st.session_state["GFPGAN_model"],
-                use_RealESRGAN=st.session_state["use_RealESRGAN"],
-                realesrgan_model_name=RealESRGAN_model,
-                use_LDSR=st.session_state["use_LDSR"],
-                LDSR_model_name=LDSR_model,
-                ddim_eta=ddim_eta,
-                normalize_prompt_weights=normalize_prompt_weights,
-                save_individual_images=save_individual_images,
-                sort_samples=group_by_prompt,
-                write_info_files=write_info_files,
-                jpg_sample=save_as_jpg,
-                variant_amount=variant_amount,
-                variant_seed=variant_seed,
-    )
-
-    del sampler
-
-    return output_images, seed, info, stats
-
-    #except RuntimeError as e:
-        #err = e
-        #err_msg = f'CRASHED:<br><textarea rows="5" style="color:white;background: black;width: -webkit-fill-available;font-family: monospace;font-size: small;font-weight: bold;">{str(e)}</textarea><br><br>Please wait while the program restarts.'
-        #stats = err_msg
-        #return [], seed, 'err', stats
-
-#
 def layout():
-    with st.form("txt2img-inputs"):
-        st.session_state["generation_mode"] = "txt2img"
-        txt_tab,img_tab = st.tabs(["文字输入","图片输入"])
-        with txt_tab:
-            input_col1_txt, _,_ = st.columns([5, 5, 2])
+    st.session_state["generation_mode"] = "txt2img"
+    #txt_tab,img_tab = st.tabs(["文字输入","图片输入"])
+    input_col1_txt, example_col = st.columns([10, 10], gap="large")
+    def example(index):
+        st.session_state["text_v"] = LEXAMPLES[index]
+        #st.write(st.session_state.text_v)
 
-            with input_col1_txt:
-                #prompt = st.text_area("Input Text","")
-                prompt = st.text_area("Input Text","", placeholder="A corgi wearing a top hat as an oil painting.", height=350)
+
+    with input_col1_txt:
+        #prompt = st.text_area("Input Text","")
+        #example = st.selectbox("输入示例",
+                                #["无",
+                                #"英文示例1","英文示例2","英文示例3","英文示例4",
+                                #"中文示例1","中文示例2","中文示例3","中文示例4",],
+                                #index=0,)
+        #if example == "无":
+            #text_v = ""
+        #else:
+            #text_v = EXAMPLES[example]
+        gen_tab, = st.tabs(["AI图像生成",])
+        with gen_tab:
+            disable_text = False
+            if not "text_v" in st.session_state:
+                st.session_state["text_v"] = ""
+
+            prompt = st.text_area("文字输入", st.session_state["text_v"], placeholder="支持英文或者中文输入, 推荐使用右边示例或阅读引导！", height=180, disabled=disable_text)
         
-        with img_tab:
-            input_col1, img_col,refresh_col, _ = st.columns([5,5, 1, 1])
-
-            with input_col1:
-                #prompt = st.text_area("Input Text","")
-                prompt_img = st.text_area("Input Text","", placeholder="A corgi wearing a top hat as an oil painting.", key="img", height=350)
-            
-            with img_col:
-
+            img_input = st.checkbox("图片输入（可选）", disabled=disable_text)
+            uploaded_images = None
+            if img_input:
                 uploaded_images = st.file_uploader(
-                            "Upload Image", accept_multiple_files=False, type=["png", "jpg", "jpeg", "webp"],
-                            help="Upload an image which will be used for the image to image generation.",
+                            " ", accept_multiple_files=False, type=["png", "jpg", "jpeg", "webp"],
+                            help="Upload an image which will be used for the image to image generation.", label_visibility="collapsed",
                         )
-                image_holder = st.empty()
-                if uploaded_images:
-                    image = Image.open(uploaded_images).convert('RGBA')
-                    new_img = image.resize((200, 200))
-                    image_holder.image(new_img)
+            image_holder = st.empty()
+            if uploaded_images:
+                image = Image.open(uploaded_images).convert('RGB')
+                new_img = image.resize((128, 128))
+                image_holder.image(new_img)
 
-            with refresh_col:
-                st.form_submit_button("Refresh")
+    with example_col:
+        #st.session_state.sampling_steps = st.number_input("生成步数", 
+                                                        #value=st.session_state.defaults.txt2img.sampling_steps.value,
+                                                        #min_value=st.session_state.defaults.txt2img.sampling_steps.min_value,
+                                                        #step=st.session_state['defaults'].txt2img.sampling_steps.step,
+                                                        #disabled=disable_text,
+                                                        #help="Set the default number of sampling steps to use. Default is: 30 (with k_euler)")
 
-        # creating the page layout using columns
-        #col1, col2, col3 = st.columns([1,2,1], gap="large")
-        gcol1, _ = st.columns([1, 20])
-        generate_button = gcol1.form_submit_button("Generate")
-        col1, col2, = st.columns([1,2], gap="large")
+        #sampler_name_list = ["k_lms", "k_euler", "k_euler_a", "k_dpm_2", "k_dpm_2_a",  "k_heun", "DDIM"]
+        #sampler_name = st.selectbox("采样方法", sampler_name_list,
+                                    #disabled=disable_text,
+                                    #index=sampler_name_list.index(st.session_state['defaults'].txt2img.default_sampler), help="Sampling method to use. Default: k_euler")
+        #seed = st.text_input("随机种子:", value=st.session_state['defaults'].txt2img.seed, 
+                            #disabled=disable_text,
+                            #help=" The seed to use, if left blank a random seed will be generated.")
+
+        #st.session_state["update_preview"] = st.session_state["defaults"].general.update_preview
+        #st.session_state["update_preview_frequency"] = st.number_input("预览频率",
+                                                                        #min_value=1,
+                                                                        #max_value=30,
+                                                                        #value=st.session_state['defaults'].txt2img.update_preview_frequency,
+                                                                        #step=5,
+                                                                        #disabled=disable_text,
+                                                                        #help="Frequency in steps at which the the preview image is updated. By default the frequency \
+                                                                        #is set to 10 step.")
+        ex_tab, guide_tab = st.tabs(["输入示例","输入引导"])
+        with ex_tab:
+            ex1 = st.button("Concept art painting of a cozy village in a mountainous forested valley, historic english and japanese architecture, realistic, detailed, cel shaded,in the style of makoto shinkai and greg rutkowski and james gurney", on_click=example, kwargs={'index': 0})
+            ex2 = st.button("Amazon valkyrie athena, d & d, fantasy, portrait, highly detailed, headshot, digital painting, trending on artstation, concept art, sharp focus, illustration, art by artgerm and greg rutkowski and magali villeneuve", on_click=example, kwargs={'index': 1})
+            ex3 = st.button("Black haired little girl. her hair is very windy. she is in a black and white dress, that white dress has black triangles as a pattern. she is carrying a big glistening green diamond shaped crystal on her hands. art by artgerm and greg rutkowski and alphonse mucha and ian sprigger and wlop and krenz cushart", on_click=example, kwargs={'index': 2})
+            ex4 = st.button("一幅中国古代宫殿风景画的写实水彩画，远处是中国古代城墙的入口，背景是雾蒙蒙的山脉", on_click=example, kwargs={'index': 3})
+            ex5 = st.button("gta9游戏玩法，16k分辨率，超级未来主义的图像", on_click=example, kwargs={'index': 4})
+            ex6 = st.button("古埃及，繁荣，青翠的高科技城市，由greg rutkowski, alex grey创作的数字绘画，4k高清", on_click=example, kwargs={'index': 5})
+
+        with guide_tab:
+            st.markdown(GUIDENCE)
+
+
+    sampler_name = "k_euler"
+    seed = None
+    st.session_state["update_preview"] = True
+    st.session_state["update_preview_frequency"] = 5
+
+    if uploaded_images:
+        st.session_state["strength"] = 0.9
+        #st.session_state["strength"] = st.slider("文本权重", min_value=0.1,
+                                        #max_value=0.99,
+                                        #step=0.01,
+                                        #value=0.8,
+                                        #disabled=disable_text,
+                                        #help="How strongly the image should follow the prompt.")
+    else:
+        st.session_state["strength"] = -1
+
+    # creating the page layout using columns
+    #col1, col2, col3 = st.columns([1,2,1], gap="large")
+
+    with st.form("txt2img-outputs"):
+            
+        la, qua, generate, _ = st.columns([0.9, 4.1, 5, 3], gap="large")
+        with la:
+            st.write("生成质量:")
+            #st.markdown("""
+            #<style>
+            #.big-font {
+                #font-size:20px !important;
+            #}
+            #</style>
+            #""", unsafe_allow_html=True)
+
+            #st.markdown('<p class="big-font">生成质量:</p>', unsafe_allow_html=True)
+        with qua:
+            qlist = ["低（速度快）", "中（默认）", "高（速度慢）"]
+            quality = st.radio("图片质量", ["低（速度快）", "中（默认）", "高（速度慢）"], index=1, horizontal=True, label_visibility="collapsed")
+            st.session_state.sampling_steps = qlist.index(quality) * 20 + 10
+
+        generate_button = generate.form_submit_button("开始生成")
+        st.markdown(
+            """
+            <style>
+            .css-6kekos.edgvbvh5{
+                text-align: right;
+                font-size: 20px;
+                color: rgb(255, 75, 75);
+            }
+            </style>
+            """,unsafe_allow_html=True
+        )
+        col1, col2, = st.columns([1,1], gap="large")
 
         with col1:
-            #width = st.slider("Width:", min_value=st.session_state['defaults'].txt2img.width.min_value, max_value=st.session_state['defaults'].txt2img.width.max_value,
-                              #value=st.session_state['defaults'].txt2img.width.value, step=st.session_state['defaults'].txt2img.width.step)
-            #height = st.slider("Height:", min_value=st.session_state['defaults'].txt2img.height.min_value, max_value=st.session_state['defaults'].txt2img.height.max_value,
-                               #value=st.session_state['defaults'].txt2img.height.value, step=st.session_state['defaults'].txt2img.height.step)
-            #cfg_scale = st.slider("CFG (Classifier Free Guidance Scale):", min_value=st.session_state['defaults'].txt2img.cfg_scale.min_value,
-                                  #max_value=st.session_state['defaults'].txt2img.cfg_scale.max_value,
-                                  #value=st.session_state['defaults'].txt2img.cfg_scale.value, step=st.session_state['defaults'].txt2img.cfg_scale.step,
-                                  #help="How strongly the image should follow the prompt.")
-            cfg_scale = 7.5
-
-            st.session_state.sampling_steps = st.number_input("Sampling Steps", 
-                                                            value=st.session_state.defaults.txt2img.sampling_steps.value,
-                                                            min_value=st.session_state.defaults.txt2img.sampling_steps.min_value,
-                                                            step=st.session_state['defaults'].txt2img.sampling_steps.step,
-                                                            help="Set the default number of sampling steps to use. Default is: 30 (with k_euler)")
-
-            sampler_name_list = ["k_lms", "k_euler", "k_euler_a", "k_dpm_2", "k_dpm_2_a",  "k_heun", "PLMS", "DDIM"]
-            sampler_name = st.selectbox("Sampling method", sampler_name_list,
-                                        index=sampler_name_list.index(st.session_state['defaults'].txt2img.default_sampler), help="Sampling method to use. Default: k_euler")
-            seed = st.text_input("Seed:", value=st.session_state['defaults'].txt2img.seed, help=" The seed to use, if left blank a random seed will be generated.")
-
-            #with st.expander("Batch Options"):
-                ##batch_count = st.slider("Batch count.", min_value=st.session_state['defaults'].txt2img.batch_count.min_value, max_value=st.session_state['defaults'].txt2img.batch_count.max_value,
-                                        ##value=st.session_state['defaults'].txt2img.batch_count.value, step=st.session_state['defaults'].txt2img.batch_count.step,
-                                        ##help="How many iterations or batches of images to generate in total.")
-
-                ##batch_size = st.slider("Batch size", min_value=st.session_state['defaults'].txt2img.batch_size.min_value, max_value=st.session_state['defaults'].txt2img.batch_size.max_value,
-                                       ##value=st.session_state.defaults.txt2img.batch_size.value, step=st.session_state.defaults.txt2img.batch_size.step,
-                                       ##help="How many images are at once in a batch.\
-                                       ##It increases the VRAM usage a lot but if you have enough VRAM it can reduce the time it takes to finish generation as more images are generated at once.\
-                                       ##Default: 1")
-
-                #st.session_state["batch_count"] = st.number_input("Batch count.", value=st.session_state['defaults'].txt2img.batch_count.value,
-                                                                #help="How many iterations or batches of images to generate in total.")
-
-                #st.session_state["batch_size"] = st.number_input("Batch size", value=st.session_state.defaults.txt2img.batch_size.value,
-                                                                   #help="How many images are at once in a batch.\
-                                                                   #It increases the VRAM usage a lot but if you have enough VRAM it can reduce the time it takes \
-                                                                   #to finish generation as more images are generated at once.\
-                                                                   #Default: 1")
-
-
-            st.session_state["update_preview"] = st.session_state["defaults"].general.update_preview
-            st.session_state["update_preview_frequency"] = st.number_input("Update Image Preview Frequency",
-                                                                            min_value=1,
-                                                                            max_value=30,
-                                                                            value=st.session_state['defaults'].txt2img.update_preview_frequency,
-                                                                            step=5,
-                                                                            help="Frequency in steps at which the the preview image is updated. By default the frequency \
-                                                                            is set to 10 step.")
-            strength = st.slider("Strenght:", min_value=0.1,
-                                  max_value=0.99,
-                                  step=0.01,
-                                  value=0.8,
-                                  help="How strongly the image should follow the prompt.")
-
-        with col2:
             #preview_tab, gallery_tab = st.tabs(["Preview", "Gallery"])
-            preview_tab,  = st.tabs(["Preview", ])
+            preview_tab,  = st.tabs(["图片预览", ])
 
             with preview_tab:
                 #st.write("Image")
@@ -299,18 +298,21 @@ def layout():
                 # create an empty container for the image, progress bar, etc so we can update it later and use session_state to hold them globally.
                 st.session_state["preview_image"] = st.empty()
 
-
                 st.session_state["progress_bar_text"] = st.empty()
-                st.session_state["progress_bar_text"].info("Nothing but crickets here, try generating something first.")
+                st.session_state["progress_bar_text"].info("暂时没有结果展示, 请先开始生成图片")
 
                 st.session_state["progress_bar"] = st.empty()
 
                 message = st.empty()
+
+        with col2:
+            #preview_tab, gallery_tab = st.tabs(["Preview", "Gallery"])
+            results_tab,  = st.tabs(["结果展示", ])
         
 
         if generate_button:
 
-            with col2:
+            with col1:
                 with hc.HyLoader('Loading Models...', hc.Loaders.standard_loaders,index=[0]):
                     if "model" in server_state:
                         print("Already loaded model")
@@ -340,65 +342,62 @@ def layout():
                 else:
                     raise Exception("Unknown sampler: " + sampler_name)
                 model.sampler = sampler
-                output_image = model.run_with_prompt(seed, prompt_img if uploaded_images else prompt, 1, 512, 384, 7.5, 
-                                                    st.session_state.sampling_steps, strength, image if uploaded_images else None, 
+                output_image = model.run_with_prompt(seed, prompt, 1, 448, 448, 7.5, 
+                                                    st.session_state.sampling_steps, st.session_state["strength"], image if uploaded_images else None, 
                                                     generation_callback, st.session_state.update_preview_frequency)
                 st.session_state["preview_image"].image(output_image)
 
-                #output_images, seeds, info, stats = txt2img(prompt, st.session_state.sampling_steps, sampler_name, st.session_state["batch_count"], st.session_state["batch_size"],
-                                                            ##cfg_scale, seed, height, width, separate_prompts, normalize_prompt_weights, save_individual_images,
-                                                            #cfg_scale, seed, False, normalize_prompt_weights, save_individual_images,
-                                                            #save_grid, group_by_prompt, save_as_jpg, st.session_state["use_GFPGAN"], st.session_state['GFPGAN_model'],
-                                                            #use_RealESRGAN=st.session_state["use_RealESRGAN"], RealESRGAN_model=st.session_state["RealESRGAN_model"],
-                                                            #use_LDSR=st.session_state["use_LDSR"], LDSR_model=st.session_state["LDSR_model"],
-                                                            #variant_amount=variant_amount, variant_seed=variant_seed, write_info_files=write_info_files)
+                message.success('生成完毕！', icon="✅")
 
-                #message.success('Render Complete: ' + info + '; Stats: ' + stats, icon="✅")
+            with col2:
+                #preview_tab, gallery_tab = st.tabs(["Preview", "Gallery"])
+                with results_tab:
+                    st.session_state["results_text"] = st.empty()
+                    sdGallery([output_image])
 
-            #history_tab,col1,col2,col3,PlaceHolder,col1_cont,col2_cont,col3_cont = st.session_state['historyTab']
+        #history_tab,col1,col2,col3,PlaceHolder,col1_cont,col2_cont,col3_cont = st.session_state['historyTab']
 
-            #if 'latestImages' in st.session_state:
-                #for i in output_images:
-                    ##push the new image to the list of latest images and remove the oldest one
-                    ##remove the last index from the list\
-                    #st.session_state['latestImages'].pop()
-                    ##add the new image to the start of the list
-                    #st.session_state['latestImages'].insert(0, i)
-                #PlaceHolder.empty()
-                #with PlaceHolder.container():
-                    #col1, col2, col3 = st.columns(3)
-                    #col1_cont = st.container()
-                    #col2_cont = st.container()
-                    #col3_cont = st.container()
-                    #images = st.session_state['latestImages']
-                    #with col1_cont:
-                        #with col1:
-                            #[st.image(images[index]) for index in [0, 3, 6] if index < len(images)]
-                    #with col2_cont:
-                        #with col2:
-                            #[st.image(images[index]) for index in [1, 4, 7] if index < len(images)]
-                    #with col3_cont:
-                        #with col3:
-                            #[st.image(images[index]) for index in [2, 5, 8] if index < len(images)]
-                    #historyGallery = st.empty()
+        #if 'latestImages' in st.session_state:
+            #for i in output_images:
+                ##push the new image to the list of latest images and remove the oldest one
+                ##remove the last index from the list\
+                #st.session_state['latestImages'].pop()
+                ##add the new image to the start of the list
+                #st.session_state['latestImages'].insert(0, i)
+            #PlaceHolder.empty()
+            #with PlaceHolder.container():
+                #col1, col2, col3 = st.columns(3)
+                #col1_cont = st.container()
+                #col2_cont = st.container()
+                #col3_cont = st.container()
+                #images = st.session_state['latestImages']
+                #with col1_cont:
+                    #with col1:
+                        #[st.image(images[index]) for index in [0, 3, 6] if index < len(images)]
+                #with col2_cont:
+                    #with col2:
+                        #[st.image(images[index]) for index in [1, 4, 7] if index < len(images)]
+                #with col3_cont:
+                    #with col3:
+                        #[st.image(images[index]) for index in [2, 5, 8] if index < len(images)]
+                #historyGallery = st.empty()
 
-                ## check if output_images length is the same as seeds length
-                #with gallery_tab:
-                    #st.markdown(createHTMLGallery(output_images,seeds), unsafe_allow_html=True)
-
-
-                    #st.session_state['historyTab'] = [history_tab,col1,col2,col3,PlaceHolder,col1_cont,col2_cont,col3_cont]
-
+            ## check if output_images length is the same as seeds length
             #with gallery_tab:
-                #print(seeds)
-                #sdGallery(output_images)
+                #st.markdown(createHTMLGallery(output_images,seeds), unsafe_allow_html=True)
 
 
-            #except (StopException, KeyError):
-                #print(f"Received Streamlit StopException")
+                #st.session_state['historyTab'] = [history_tab,col1,col2,col3,PlaceHolder,col1_cont,col2_cont,col3_cont]
 
-                # this will render all the images at the end of the generation but its better if its moved to a second tab inside col2 and shown as a gallery.
-                # use the current col2 first tab to show the preview_img and update it as its generated.
-                #preview_image.image(output_images)
+        #with gallery_tab:
+            #print(seeds)
+
+
+        #except (StopException, KeyError):
+            #print(f"Received Streamlit StopException")
+
+            # this will render all the images at the end of the generation but its better if its moved to a second tab inside col2 and shown as a gallery.
+            # use the current col2 first tab to show the preview_img and update it as its generated.
+            #preview_image.image(output_images)
 
 

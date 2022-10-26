@@ -37,7 +37,7 @@ button[data-baseweb="tab"] {
 
 /* Main streamlit container (below header) //reduce the empty spaces*/
 .css-18e3th9 {
-  padding-top: 10rem;
+  padding-top: 5rem;
 }
 
 
@@ -70,6 +70,7 @@ button[kind="header"] {
 
   /* added to avoid main sectors (all element to the right of sidebar from) moving */
   section[data-testid="stSidebar"] {
+    display: none;
     width: 3.5% !important;
     min-width: 3.5% !important;
   }
@@ -129,7 +130,7 @@ div.gallery:hover {
 }
 
 .row-widget.stButton {
-  text-align: center;
+  text-align: left;
 }
 
 /********************************************************************
