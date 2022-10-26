@@ -342,7 +342,7 @@ def layout():
                 else:
                     raise Exception("Unknown sampler: " + sampler_name)
                 model.sampler = sampler
-                output_image = model.run_with_prompt(seed, prompt, 1, 448, 448, 7.5, 
+                output_image = model.run_with_prompt(seed, prompt, 1, 512, 384, 7.5, 
                                                     st.session_state.sampling_steps, st.session_state["strength"], image if uploaded_images else None, 
                                                     generation_callback, st.session_state.update_preview_frequency)
                 st.session_state["preview_image"].image(output_image)
