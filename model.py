@@ -118,6 +118,9 @@ class AppModel():
         if fb_img is not None:
             return fb_img
         prompt = translator_zh2en(prompt)
+        fb_img2 = prompt_filter(prompt)
+        if fb_img2 is not None:
+            return fb_img2
         print(f"Prompt: {prompt}")
         batch_size = n_samples
         data = [batch_size * [prompt]]

@@ -26,7 +26,7 @@ from sd_utils import *
 import streamlit_nested_layout
 
 #streamlit components section
-from st_on_hover_tabs import on_hover_tabs
+#from st_on_hover_tabs import on_hover_tabs
 from streamlit_server_state import server_state, server_state_lock
 
 #other imports
@@ -91,17 +91,17 @@ def layout():
 		# load css as an external file, function has an option to local or remote url. Potential use when running from cloud infra that might not have access to local path.
 		load_css(True, 'frontend/css/streamlit.main.css')
 		
-	st.experimental_set_query_params(page='马良平台')
+	#st.experimental_set_query_params(page='马良平台')
 	try:
 		set_page_title("马良平台")
 	except NameError:
 		st.experimental_rerun()
 	
-	txt2img_tab, = st.tabs(["AI图像生成",])
+	#txt2img_tab, = st.tabs(["AI图像生成",])
 	
-	with txt2img_tab:
-		from txt2img import layout
-		layout()
+	#with txt2img_tab:
+	from txt2img import layout
+	layout()
 	
 	
 if __name__ == '__main__':
