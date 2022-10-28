@@ -41,7 +41,7 @@ from ldm.models.diffusion.plms import PLMSSampler
 
 from model import AppModel
 
-os.environ["MTGPU_MAX_MEM_USAGE_GB"]="16"
+os.environ["MTGPU_MAX_MEM_USAGE_GB"]="15"
 
 # Temp imports
 
@@ -65,36 +65,19 @@ except:
 #         url="http://localhost:3001",
 #     )
 
-EXAMPLES = {
-"英文示例1": "Concept art painting of a cozy village in a mountainous forested valley, historic english and japanese architecture, realistic, detailed, cel shaded, in the style of makoto shinkai and greg rutkowski and james gurney",
-
-"英文示例2": "Amazon valkyrie athena, d & d, fantasy, portrait, highly detailed, headshot, digital painting, trending on artstation, concept art, sharp focus, illustration, art by artgerm and greg rutkowski and magali villeneuve",
-
-"英文示例3": "Black haired little girl. her hair is very windy. she is in a black and white dress, that white dress has black triangles as a pattern. she is carrying a big glistening green diamond shaped crystal on her hands. art by artgerm and greg rutkowski and alphonse mucha and ian sprigger and wlop and krenz cushart",
-
-"英文示例4": "A chinese landscape painting of a building in a serene landscape",
-
-"中文示例1": "一只聪明的熊猫在喝可口可乐的电影海报，8k高清图片",
-
-"中文示例2": "一幅中国古代宫殿风景画的写实水彩画，远处是中国古代城墙的入口，背景是雾蒙蒙的山脉",
-
-"中文示例3": "一幅中国古代水墨画，画的是宁静的风景中的建筑",
-
-"中文示例4":"超写实的女宇航员肖像，全身肖像，良好的照明，复杂的抽象。赛博朋克，错综复杂的艺术作品，高度细节，敏锐的焦点，复杂的概念艺术，数字绘画，环境照明，4k，艺术站",
-}
-
 LEXAMPLES = [
+"一幅中国古代宫殿风景画的写实水彩画，远处是中国古代城墙的入口，背景是雾蒙蒙的山脉",
+
+"gta9游戏玩法，16k分辨率，超级未来主义的图像",
+
+"古埃及，繁荣，青翠的高科技城市，由greg rutkowski, alex grey创作的数字绘画，4k高清",
+
 "Concept art painting of a cozy village in a mountainous forested valley, historic english and japanese architecture, realistic, detailed, cel shaded, in the style of makoto shinkai and greg rutkowski and james gurney",
 
 "Amazon valkyrie athena, d & d, fantasy, portrait, highly detailed, headshot, digital painting, trending on artstation, concept art, sharp focus, illustration, art by artgerm and greg rutkowski and magali villeneuve",
 
 "Black haired little girl. her hair is very windy. she is in a black and white dress, that white dress has black triangles as a pattern. she is carrying a big glistening green diamond shaped crystal on her hands. art by artgerm and greg rutkowski and alphonse mucha and ian sprigger and wlop and krenz cushart",
 
-"一幅中国古代宫殿风景画的写实水彩画，远处是中国古代城墙的入口，背景是雾蒙蒙的山脉",
-
-"gta9游戏玩法，16k分辨率，超级未来主义的图像",
-
-"古埃及，繁荣，青翠的高科技城市，由greg rutkowski, alex grey创作的数字绘画，4k高清",
 ]
 
 GUIDENCE = '''为了更好地生成文本提示，从而生成优美的图片。文本输入通常遵循一定的原则。本篇将带领大家生成一个漂亮的文本输入。
@@ -156,7 +139,7 @@ class plugin_info():
 def layout():
     st.session_state["generation_mode"] = "txt2img"
     #txt_tab,img_tab = st.tabs(["文字输入","图片输入"])
-    input_col1_txt, example_col = st.columns([10, 10], gap="large")
+    input_col1_txt, img_col = st.columns([1, 1], gap="large")
     def example(index):
         st.session_state["text_v"] = LEXAMPLES[index]
         #st.write(st.session_state.text_v)
@@ -173,28 +156,121 @@ def layout():
             #text_v = ""
         #else:
             #text_v = EXAMPLES[example]
-        gen_tab, = st.tabs(["AI图像生成",])
-        with gen_tab:
+        text_tab, img_tab = st.tabs(["文字输入","图像输入"])
+        with text_tab:
             disable_text = False
             if not "text_v" in st.session_state:
                 st.session_state["text_v"] = ""
 
-            prompt = st.text_area("文字输入", st.session_state["text_v"], placeholder="支持英文或者中文输入, 推荐使用右边示例或阅读引导！", height=180, disabled=disable_text)
-        
-            img_input = st.checkbox("图片输入（可选）", disabled=disable_text)
+            prompt = st.text_area("文字输入", st.session_state["text_v"], placeholder="支持英文或者中文输入, 推荐使用右边示例或阅读引导！", 
+                                   label_visibility="collapsed", height=190, disabled=disable_text)
+
+        with img_tab:
             uploaded_images = None
-            if img_input:
-                uploaded_images = st.file_uploader(
-                            " ", accept_multiple_files=False, type=["png", "jpg", "jpeg", "webp"],
-                            help="Upload an image which will be used for the image to image generation.", label_visibility="collapsed",
-                        )
+            uploaded_images = st.file_uploader(
+                        "图像输入", accept_multiple_files=False, type=["png", "jpg", "jpeg", "webp"],
+                        help="Upload an image which will be used for the image to image generation.", label_visibility="collapsed",
+                    )
             image_holder = st.empty()
             if uploaded_images:
                 image = Image.open(uploaded_images).convert('RGB')
                 new_img = image.resize((128, 128))
                 image_holder.image(new_img)
+            else:
+                st.write("")
+                st.write("")
+                st.write("")
+                st.write("")
+                st.write("")
+                st.write("")
+                st.write("")
 
-    with example_col:
+        #with st.form("txt2img-outputs"):
+        la, qua, generate = st.columns([1, 4, 1.5], gap="large")
+        with la:
+            st.write("生成质量:")
+            #st.markdown("""
+            #<style>
+            #.big-font {
+                #font-size:20px !important;
+            #}
+            #</style>
+            #""", unsafe_allow_html=True)
+
+            #st.markdown('<p class="big-font">生成质量:</p>', unsafe_allow_html=True)
+        with qua:
+            qlist = ["低（速度快）", "中（默认）", "高（速度慢）"]
+            quality = st.radio("图片质量", ["低（速度快）", "中（默认）", "高（速度慢）"], index=1, horizontal=True, label_visibility="collapsed")
+            st.session_state.sampling_steps = qlist.index(quality) * 20 + 10
+
+        #generate_button = generate.form_submit_button("开始生成")
+        generate_button = generate.button("开始生成")
+
+        ex_tab, guide_tab = st.tabs(["输入示例","输入引导"])
+        with ex_tab:
+            ex1 = st.button("一幅中国古代宫殿风景画的写实水彩画，远处是中国古代城墙的入口，背景是雾蒙蒙的山脉", on_click=example, kwargs={'index': 0})
+            ex2 = st.button("gta9游戏玩法，16k分辨率，超级未来主义的图像", on_click=example, kwargs={'index': 1})
+            ex3 = st.button("古埃及，繁荣，青翠的高科技城市，由greg rutkowski, alex grey创作的数字绘画，4k高清", on_click=example, kwargs={'index': 2})
+            ex4 = st.button("Concept art painting of a cozy village in a mountainous forested valley, historic english and japanese architecture, realistic, detailed, cel shaded,in the style of makoto shinkai and greg rutkowski and james gurney", on_click=example, kwargs={'index': 3})
+            ex5 = st.button("Amazon valkyrie athena, d & d, fantasy, portrait, highly detailed, headshot, digital painting, trending on artstation, concept art, sharp focus, illustration, art by artgerm and greg rutkowski and magali villeneuve", on_click=example, kwargs={'index': 4})
+            ex6 = st.button("Black haired little girl. her hair is very windy. she is in a black and white dress, that white dress has black triangles as a pattern. she is carrying a big glistening green diamond shaped crystal on her hands. art by artgerm and greg rutkowski and alphonse mucha and ian sprigger and wlop and krenz cushart", on_click=example, kwargs={'index': 5})
+
+        with guide_tab:
+            st.markdown(GUIDENCE)
+        st.markdown(
+            """
+            <style>
+            .css-6kekos.edgvbvh9{
+                text-align: left;
+            }
+            </style>
+            """,unsafe_allow_html=True
+        )
+
+    with img_col:
+        #preview_tab, gallery_tab = st.tabs(["Preview", "Gallery"])
+        preview_tab,  = st.tabs(["图片展示", ])
+
+        with preview_tab:
+            #st.write("Image")
+            #Image for testing
+            #image = Image.open(requests.get("https://icon-library.com/images/image-placeholder-icon/image-placeholder-icon-13.jpg", stream=True).raw).convert('RGB')
+            #new_image = image.resize((175, 240))
+            #preview_image = st.image(image)
+
+            # create an empty container for the image, progress bar, etc so we can update it later and use session_state to hold them globally.
+            st.session_state["preview_image"] = st.empty()
+
+            st.session_state["progress_bar_text"] = st.empty()
+            st.session_state["progress_bar_text"].info("暂时没有结果展示, 请先开始生成图片")
+
+            st.session_state["progress_bar"] = st.empty()
+
+            message = st.empty()
+
+    sampler_name = "k_euler"
+    seed = None
+    st.session_state["update_preview"] = True
+    st.session_state["update_preview_frequency"] = 5
+
+    if uploaded_images:
+        st.session_state["strength"] = 0.9
+        #st.session_state["strength"] = st.slider("文本权重", min_value=0.1,
+                                        #max_value=0.99,
+                                        #step=0.01,
+                                        #value=0.8,
+                                        #disabled=disable_text,
+                                        #help="How strongly the image should follow the prompt.")
+    else:
+        st.session_state["strength"] = -1
+
+    # creating the page layout using columns
+    #col1, col2, col3 = st.columns([1,2,1], gap="large")
+
+
+    #example_col, _, = st.columns([1,1], gap="large")
+
+    #with example_col:
         #st.session_state.sampling_steps = st.number_input("生成步数", 
                                                         #value=st.session_state.defaults.txt2img.sampling_steps.value,
                                                         #min_value=st.session_state.defaults.txt2img.sampling_steps.min_value,
@@ -219,141 +295,48 @@ def layout():
                                                                         #disabled=disable_text,
                                                                         #help="Frequency in steps at which the the preview image is updated. By default the frequency \
                                                                         #is set to 10 step.")
-        ex_tab, guide_tab = st.tabs(["输入示例","输入引导"])
-        with ex_tab:
-            ex1 = st.button("Concept art painting of a cozy village in a mountainous forested valley, historic english and japanese architecture, realistic, detailed, cel shaded,in the style of makoto shinkai and greg rutkowski and james gurney", on_click=example, kwargs={'index': 0})
-            ex2 = st.button("Amazon valkyrie athena, d & d, fantasy, portrait, highly detailed, headshot, digital painting, trending on artstation, concept art, sharp focus, illustration, art by artgerm and greg rutkowski and magali villeneuve", on_click=example, kwargs={'index': 1})
-            ex3 = st.button("Black haired little girl. her hair is very windy. she is in a black and white dress, that white dress has black triangles as a pattern. she is carrying a big glistening green diamond shaped crystal on her hands. art by artgerm and greg rutkowski and alphonse mucha and ian sprigger and wlop and krenz cushart", on_click=example, kwargs={'index': 2})
-            ex4 = st.button("一幅中国古代宫殿风景画的写实水彩画，远处是中国古代城墙的入口，背景是雾蒙蒙的山脉", on_click=example, kwargs={'index': 3})
-            ex5 = st.button("gta9游戏玩法，16k分辨率，超级未来主义的图像", on_click=example, kwargs={'index': 4})
-            ex6 = st.button("古埃及，繁荣，青翠的高科技城市，由greg rutkowski, alex grey创作的数字绘画，4k高清", on_click=example, kwargs={'index': 5})
-
-        with guide_tab:
-            st.markdown(GUIDENCE)
 
 
-    sampler_name = "k_euler"
-    seed = None
-    st.session_state["update_preview"] = True
-    st.session_state["update_preview_frequency"] = 5
 
-    if uploaded_images:
-        st.session_state["strength"] = 0.9
-        #st.session_state["strength"] = st.slider("文本权重", min_value=0.1,
-                                        #max_value=0.99,
-                                        #step=0.01,
-                                        #value=0.8,
-                                        #disabled=disable_text,
-                                        #help="How strongly the image should follow the prompt.")
-    else:
-        st.session_state["strength"] = -1
+    if generate_button:
 
-    # creating the page layout using columns
-    #col1, col2, col3 = st.columns([1,2,1], gap="large")
-
-    with st.form("txt2img-outputs"):
-            
-        la, qua, generate, _ = st.columns([0.9, 4.1, 5, 3], gap="large")
-        with la:
-            st.write("生成质量:")
-            #st.markdown("""
-            #<style>
-            #.big-font {
-                #font-size:20px !important;
-            #}
-            #</style>
-            #""", unsafe_allow_html=True)
-
-            #st.markdown('<p class="big-font">生成质量:</p>', unsafe_allow_html=True)
-        with qua:
-            qlist = ["低（速度快）", "中（默认）", "高（速度慢）"]
-            quality = st.radio("图片质量", ["低（速度快）", "中（默认）", "高（速度慢）"], index=1, horizontal=True, label_visibility="collapsed")
-            st.session_state.sampling_steps = qlist.index(quality) * 20 + 10
-
-        generate_button = generate.form_submit_button("开始生成")
-        st.markdown(
-            """
-            <style>
-            .css-6kekos.edgvbvh5{
-                text-align: right;
-                font-size: 20px;
-                color: rgb(255, 75, 75);
-            }
-            </style>
-            """,unsafe_allow_html=True
-        )
-        col1, col2, = st.columns([1,1], gap="large")
-
-        with col1:
-            #preview_tab, gallery_tab = st.tabs(["Preview", "Gallery"])
-            preview_tab,  = st.tabs(["图片预览", ])
-
-            with preview_tab:
-                #st.write("Image")
-                #Image for testing
-                #image = Image.open(requests.get("https://icon-library.com/images/image-placeholder-icon/image-placeholder-icon-13.jpg", stream=True).raw).convert('RGB')
-                #new_image = image.resize((175, 240))
-                #preview_image = st.image(image)
-
-                # create an empty container for the image, progress bar, etc so we can update it later and use session_state to hold them globally.
-                st.session_state["preview_image"] = st.empty()
-
-                st.session_state["progress_bar_text"] = st.empty()
-                st.session_state["progress_bar_text"].info("暂时没有结果展示, 请先开始生成图片")
-
-                st.session_state["progress_bar"] = st.empty()
-
-                message = st.empty()
-
-        with col2:
-            #preview_tab, gallery_tab = st.tabs(["Preview", "Gallery"])
-            results_tab,  = st.tabs(["结果展示", ])
-        
-
-        if generate_button:
-
-            with col1:
-                with hc.HyLoader('Loading Models...', hc.Loaders.standard_loaders,index=[0]):
-                    if "model" in server_state:
-                        print("Already loaded model")
-                        model = server_state["model"]
-                    else:
-                        model = AppModel()
-                        server_state["model"] = model
-
-                seed = seed_to_int(seed)
-
-                if sampler_name == 'PLMS':
-                    sampler = PLMSSampler(server_state["model"].model)
-                elif sampler_name == 'DDIM':
-                    sampler = DDIMSampler(server_state["model"].model)
-                elif sampler_name == 'k_dpm_2_a':
-                    sampler = KDiffusionSampler(server_state["model"].model,'dpm_2_ancestral')
-                elif sampler_name == 'k_dpm_2':
-                    sampler = KDiffusionSampler(server_state["model"].model,'dpm_2')
-                elif sampler_name == 'k_euler_a':
-                    sampler = KDiffusionSampler(server_state["model"].model,'euler_ancestral')
-                elif sampler_name == 'k_euler':
-                    sampler = KDiffusionSampler(server_state["model"].model,'euler')
-                elif sampler_name == 'k_heun':
-                    sampler = KDiffusionSampler(server_state["model"].model,'heun')
-                elif sampler_name == 'k_lms':
-                    sampler = KDiffusionSampler(server_state["model"].model,'lms')
+        with img_col:
+            with hc.HyLoader('Loading Models...', hc.Loaders.standard_loaders,index=[0]):
+                if "model" in server_state:
+                    print("Already loaded model")
+                    model = server_state["model"]
                 else:
-                    raise Exception("Unknown sampler: " + sampler_name)
-                model.sampler = sampler
-                output_image = model.run_with_prompt(seed, prompt, 1, 512, 384, 7.5, 
-                                                    st.session_state.sampling_steps, st.session_state["strength"], image if uploaded_images else None, 
-                                                    generation_callback, st.session_state.update_preview_frequency)
-                st.session_state["preview_image"].image(output_image)
+                    model = AppModel()
+                    server_state["model"] = model
 
-                message.success('生成完毕！', icon="✅")
 
-            with col2:
-                #preview_tab, gallery_tab = st.tabs(["Preview", "Gallery"])
-                with results_tab:
-                    st.session_state["results_text"] = st.empty()
-                    sdGallery([output_image])
+            if sampler_name == 'PLMS':
+                sampler = PLMSSampler(server_state["model"].model)
+            elif sampler_name == 'DDIM':
+                sampler = DDIMSampler(server_state["model"].model)
+            elif sampler_name == 'k_dpm_2_a':
+                sampler = KDiffusionSampler(server_state["model"].model,'dpm_2_ancestral')
+            elif sampler_name == 'k_dpm_2':
+                sampler = KDiffusionSampler(server_state["model"].model,'dpm_2')
+            elif sampler_name == 'k_euler_a':
+                sampler = KDiffusionSampler(server_state["model"].model,'euler_ancestral')
+            elif sampler_name == 'k_euler':
+                sampler = KDiffusionSampler(server_state["model"].model,'euler')
+            elif sampler_name == 'k_heun':
+                sampler = KDiffusionSampler(server_state["model"].model,'heun')
+            elif sampler_name == 'k_lms':
+                sampler = KDiffusionSampler(server_state["model"].model,'lms')
+            else:
+                raise Exception("Unknown sampler: " + sampler_name)
+            model.sampler = sampler
+            seed = seed_to_int(seed)
+            output_image = model.run_with_prompt(seed, prompt, 1, 512, 384, 7.5, 
+                                                st.session_state.sampling_steps, st.session_state["strength"], image if uploaded_images else None, 
+                                                generation_callback, st.session_state.update_preview_frequency)
+            st.session_state["preview_image"].image(output_image)
+
+            message.success('生成完毕！', icon="✅")
+
 
         #history_tab,col1,col2,col3,PlaceHolder,col1_cont,col2_cont,col3_cont = st.session_state['historyTab']
 

@@ -102,6 +102,7 @@ class AppModel():
         self.device = device
         self.model = self.model.to(device)
         self.model.cond_stage_model.device = device
+        # self.model.model.diffusion_model = torch.jit.load('weights/unet.pt')
 
         self.sampler = PLMSSampler(self.model)
         self.img_sampler = DDIMSampler(self.model)
