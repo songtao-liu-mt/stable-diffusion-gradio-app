@@ -32,7 +32,8 @@ paint_pipeline = StableDiffusionInpaintPipeline.from_pretrained(
 
 paint_pipeline.safety_checker = DummySafeChecker()
 paint_pipeline.feature_extractor = DummyFeatureExtractor()
-
+# paint_pipeline.safety_checker.to('cpu')
+# paint_pipeline.feature_extractor.to('cpu')
 
 image2image_pipeline = StableDiffusionImg2ImgPipeline(
     vae = paint_pipeline.vae,

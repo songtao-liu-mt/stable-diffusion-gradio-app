@@ -119,7 +119,7 @@ def replace_punctuation(strs):
 
     r = "[\s+\.\!\/<>“”,$%^*(+\"\']+|[+——！，。？、~@#￥%……&*（）]+"
 
-    return re.sub(r3, " ", strs.strip())
+    return re.sub(r, " ", strs.strip())
 
 
 def traditional2simplified(sentence):

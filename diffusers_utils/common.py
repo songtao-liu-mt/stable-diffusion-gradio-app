@@ -61,3 +61,12 @@ def image_grid(imgs):
     for i, img in enumerate(imgs):
         grids.paste(img, box=(i % cols * w, i // cols * h))
     return grids
+
+def is_contain_chinese(text):
+    """
+    判断字符串中是否包含中文
+    :param check_str: {str} 需要检测的字符串
+    :return: {bool} 包含返回True， 不包含返回False
+    """
+    
+    return len(text.encode('utf-8')) > len(text)

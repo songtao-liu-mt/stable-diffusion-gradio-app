@@ -47,7 +47,7 @@ GUIDENCE = '''为了更好地生成文本提示，从而生成优美的图片。
 
 
 '''
-SUB_GUIDENCE = '为了净化网络环境，请慎重输入词汇，避免 **敏感词**。建议先阅读「马良小助手」中的「文本输入引导」'
+SUB_GUIDENCE = '为了净化网络环境，请慎重输入词汇，避免 **敏感词**。建议先阅读「马良小助手」中的「文本输入引导」。当前暂时只支持中文与英文哦。'
 TEXT_EXAMPLES = [
             '一个正在跑步的女孩的照片，穿着红色裙子，8k高清的图片，背景虚化的拍照风格',
             '一只聪明的熊猫在喝可口可乐的电影海报， 戴着极光蓝的帽子，8k高清图片，在宋朝时期',
@@ -166,9 +166,20 @@ def main():
                             with gr.Column():
                                 with gr.Group():
                                     with gr.Tabs():
+                                        # with gr.TabItem('选择模式'):
+                                        #     with gr.TabItem('内容'):
+                                        #         content = gr.Image(type="pil", label="点击内容", interactive=False)
+                                        #         gr.Examples(
+                                        #             label='内容类型',
+                                        #             examples=[
+                                        #                     os.path.join(os.path.dirname(__file__), "mt_images/content/photo_content.png")
+                                        #                 ],
+                                        #             inputs=content,
+                                                    
+                                        #         )
                                         with gr.TabItem('文本输入'):
-                                            lang = gr.Radio(value='英文', choices=['英文', '中文'], show_label=False)
-                                            text_prompt = gr.Textbox(value='', label='输入文本前，请先阅读「马良小助手」「文本输入引导」', lines=6, interactive=True)
+                                            
+                                            text_prompt = gr.Textbox(value='', label='输入文本前，请先阅读「马良小助手」「文本输入引导」。当前暂时只支持中文与英文哦。', lines=6, interactive=True)
                                             gr.Examples(
                                                 label='文本示例',
                                                 examples=TEXT_EXAMPLES,
@@ -255,7 +266,7 @@ def main():
                                         strength,
                                         seed,
                                         num_images,
-                                        lang
+    
                                     ],
                                     outputs=[
                                         result_grid,
@@ -284,7 +295,7 @@ def main():
                                         
                                     with gr.Tabs():
                                         with gr.TabItem('文本输入'):
-                                            lang = gr.Radio(value='英文', choices=['英文', '中文'], show_label=False)
+                                            
                                             text_prompt = gr.Textbox(value="",
                                                                 lines=12, label=SUB_GUIDENCE)
                                     with gr.Row():
@@ -356,7 +367,7 @@ def main():
                                         strength,
                                         seed,
                                         num_images,
-                                        lang
+    
                                     ],
                                     outputs=[
                                         result_grid,
@@ -381,7 +392,7 @@ def main():
                                         with gr.TabItem('图像输入'):
                                             init_img = gr.Image(type="pil", label="初始图像", source="canvas", tool="color-sketch")
                                         with gr.TabItem('文本输入'):
-                                            lang = gr.Radio(value='英文', choices=['英文', '中文'], show_label=False)
+                                            
                                             text_prompt = gr.Textbox(lines=12, label=SUB_GUIDENCE)
                                     with gr.Row():
                                         run_button = gr.Button('运行生成', variant="primary")
@@ -453,7 +464,7 @@ def main():
                                         strength,
                                         seed,
                                         num_images,
-                                        lang
+    
                                     ],
                                     outputs=[
                                         result_grid,
@@ -481,7 +492,7 @@ def main():
                                         with gr.TabItem('图像输入'):
                                             init_img = gr.Image(type="pil", label="初始图像", id='input_img')
                                         with gr.TabItem('文本输入'):
-                                            lang = gr.Radio(value='英文', choices=['英文', '中文'], show_label=False)
+                                            
                                             text_prompt = gr.Textbox(lines=12, label=SUB_GUIDENCE)
                                     with gr.Row():
                                         run_button = gr.Button('运行生成', variant="primary")
@@ -552,7 +563,7 @@ def main():
                                     strength,
                                     seed,
                                     num_images,
-                                    lang
+
                                     
                                 ],
                                 outputs=[
@@ -602,7 +613,7 @@ def main():
                             with gr.Column():
                                 with gr.Tabs():
                                     with gr.TabItem('文本输入'):
-                                        lang = gr.Radio(value='英文', choices=['英文', '中文'], show_label=False)
+                                        
                                         text_prompt = gr.Textbox(lines=3, label=SUB_GUIDENCE)
                                     
                                 with gr.Group():
@@ -655,7 +666,7 @@ def main():
                                     scale,
                                     strength,
                                     seed,
-                                    lang
+
                                 ],
                                 outputs=[
                                     result_image_ori,
@@ -696,7 +707,7 @@ def main():
                             with gr.Column():
                                 with gr.Tabs():
                                     with gr.TabItem('文本输入'):
-                                        lang = gr.Radio(value='英文', choices=['英文', '中文'], show_label=False)
+                                        
                                         text_prompt = gr.Textbox(lines=3, label=SUB_GUIDENCE)
                                 with gr.Group():
                                     direction = gr.Radio(
@@ -755,7 +766,7 @@ def main():
                                     scale,
                                     strength,
                                     seed,
-                                    lang
+
                                 ],
                                 outputs=[
                                     result_image_ori, 
@@ -783,30 +794,132 @@ def main():
                                         ) 
             
                 with gr.TabItem('超分辨率', id="sr_tab"):
-                        with gr.Column():
-                            SR_input_img = gr.Image(type="pil", label="低分辨率图像", elem_id="sr_input")
-                            SR_button = gr.Button('生成高清图像', variant="primary")
-                        with gr.Column():
-                            with gr.Tabs() as result_tabs_hr:
-                                with gr.TabItem('高清图像', id='hr_tab'):
-                                    SR_result = gr.Image(show_label=False)
-                                with gr.TabItem('v.s. 原图'):
-                                    low_image = gr.Image(show_label=False)
-                                    
-        
-                        SR_button.click(fn=SR_model.run,
-                                        inputs=[
-                                            SR_input_img,
-                                        ],
-                                        outputs=[
-                                            low_image,
-                                            SR_result,
-                                            result_tabs_hr
-                                        ])
+                    with gr.Column():
+                        SR_input_img = gr.Image(type="pil", label="低分辨率图像", elem_id="sr_input")
+                        SR_button = gr.Button('生成高清图像', variant="primary")
+                    with gr.Column():
+                        with gr.Tabs() as result_tabs_hr:
+                            with gr.TabItem('高清图像', id='hr_tab'):
+                                SR_result = gr.Image(show_label=False)
+                            with gr.TabItem('v.s. 原图'):
+                                low_image = gr.Image(show_label=False)
+                                
+    
+                    SR_button.click(fn=SR_model.run,
+                                    inputs=[
+                                        SR_input_img,
+                                    ],
+                                    outputs=[
+                                        low_image,
+                                        SR_result,
+                                        result_tabs_hr
+                                    ])
                 
+                # with gr.TabItem('扩展'):
+                    
+                #     def load_js(name):
+                #         if name in ["export", "commit", "undo"]:
+                #             return f"""
+                #     function (x)
+                #     {{  
+                #         let app=document.querySelector("gradio-app");
+                #         app=app.shadowRoot??app;
+                #         let frame=app.querySelector("#sdinfframe").contentWindow.document;
+                #         let button=frame.querySelector("#{name}");
+                #         button.click();
+                #         return x;
+                #     }}
+                #     """
+                #         ret = ""
+                #         with open(f"./js/{name}.js", "r") as f:
+                #             ret = f.read()
+                #         return ret
+
+
+                #     proceed_button_js = load_js("proceed")
+                #     setup_button_js = load_js("setup")
+                    
+                    
+                #     RUN_IN_SPACE = False
+                #     with gr.Row(elem_id="setup_row"):
+                #         with gr.Column(scale=1, min_width=100):
+                #             canvas_width = gr.Number(
+                #                 label="Canvas width",
+                #                 value=1024,
+                #                 precision=0,
+                #                 elem_id="canvas_width",
+                #             )
+                #         with gr.Column(scale=1, min_width=100):
+                #             canvas_height = gr.Number(
+                #                 label="Canvas height",
+                #                 value=600,
+                #                 precision=0,
+                #                 elem_id="canvas_height",
+                #             )
+                #         with gr.Column(scale=1, min_width=100):
+                #             selection_size = gr.Number(
+                #                 label="Selection box size",
+                #                 value=256,
+                #                 precision=0,
+                #                 elem_id="selection_size",
+                #             )
+                #     setup_button = gr.Button("Click to Setup (may take a while)", variant="primary")
+                #     upload_button = gr.Button(
+                #                         "Before uploading the image you need to setup the canvas first", visible=False
+                #                     )
+                    
+                #     def load_html():
+                #         body, canvaspy = "", ""
+                #         with open("index.html", encoding="utf8") as f:
+                #             body = f.read()
+                #         with open("canvas.py", encoding="utf8") as f:
+                #             canvaspy = f.read()
+                #         body = body.replace("- paths:\n", "")
+                #         body = body.replace("  - ./canvas.py\n", "")
+                #         body = body.replace("from canvas import InfCanvas", canvaspy)
+                #         return body
+                    
+                #     def test(x):
+                #         x = load_html()
+                #         return f"""<iframe id="sdinfframe" style="width: 100%; height: 600px" name="result" allow="midi; geolocation; microphone; camera; 
+                #         display-capture; encrypted-media; vertical-scroll 'none'" sandbox="allow-modals allow-forms 
+                #         allow-scripts allow-same-origin allow-popups 
+                #         allow-top-navigation-by-user-activation allow-downloads" allowfullscreen="" 
+                #         allowpaymentrequest="" frameborder="0" srcdoc='{x}'></iframe>"""
+                        
+                #     frame = gr.HTML(test(2), visible=RUN_IN_SPACE)
+                    
+                #     def setup_func(canvas_width, canvas_height, selection_size):
+                #         canvas_width = gr.update(visible=False)
+                #         canvas_height = gr.update(visible=False)
+                #         selection_size = gr.update(visible=False)
+                #         setup_button = gr.update(visible=False)
+                #         frame = gr.update(visible=True)
+                #         upload_button = gr.update(value="Upload Image")
+                #         return  canvas_width, canvas_height, selection_size, setup_button, frame, upload_button
+                        
+            
+                #     setup_button.click(
+                #         fn=setup_func,
+                #         inputs=[
+                #             canvas_width,
+                #             canvas_height,
+                #             selection_size,
+                #         ],
+                #         outputs=[
+                #             canvas_width,
+                #             canvas_height,
+                #             selection_size,
+                #             setup_button,
+                #             frame,
+                #             upload_button
+                #         ],
+                #         _js=setup_button_js,
+                #     )
+                    
             with gr.TabItem('马良小助手'):
                 with gr.TabItem('流程演示'):
-                    gr.Video(value='demos/maliang_demo.mp4',
+                    gr.Video(value='demos/maliang_platform.mp4',
                             format='mp4',
                             label='请点击播放，观看完整流程教学视频（建议打开全屏模式）。',
                             show_label=True,
@@ -821,7 +934,7 @@ def main():
         
     demo.launch(
         server_name="0.0.0.0",
-        server_port=7800,
+        server_port=8084,
         enable_queue=True,
         share=args.share,
     )
@@ -829,3 +942,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+   

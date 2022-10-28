@@ -11,7 +11,7 @@ import PIL
 import cv2
 import math
 import gc
-from diffusers_utils import paint_pipeline, image2image_pipeline, text2image_pipeline, translator_zh2en, deal_width_exceed_maxside, image_grid, GaussianBlur, device, MAX_SIDE, ChineseFilter, EnglishFilter, logo_image_pil, forbidden_pil
+from diffusers_utils import paint_pipeline, image2image_pipeline, text2image_pipeline, translator_zh2en, deal_width_exceed_maxside, image_grid, GaussianBlur, device, MAX_SIDE, ChineseFilter, EnglishFilter, logo_image_pil, forbidden_pil, is_contain_chinese
 import gradio as gr
 import logging
 import re
@@ -54,7 +54,7 @@ def check_empty_text_prompt(text_prompt):
         return 'asdfghjkl'
     return text_prompt
 
-def inpaint_predict(dict, prompt, steps=50, scale=7.5, strength=0.8, seed=42, lang='英文'):
+def inpaint_predict(dict, prompt, steps=50, scale=7.5, strength=0.8, seed=42):
     gc.collect()
     torch.cuda.empty_cache()
     torch.cuda.ipc_collect()
@@ -71,7 +71,7 @@ def inpaint_predict(dict, prompt, steps=50, scale=7.5, strength=0.8, seed=42, la
     w, h = init_img.size
     empty_image = None
     prompt = check_empty_text_prompt(prompt)
-    if lang == '中文':
+    if is_contain_chinese(prompt):
         empty_image = check_prompt_to_empty_image(ChineseFilter, prompt)
         if empty_image:
             return empty_image, empty_image, button_update_1, button_update_2, button_update_3
@@ -88,7 +88,7 @@ def inpaint_predict(dict, prompt, steps=50, scale=7.5, strength=0.8, seed=42, la
     return result_image, result_image_with_logo, button_update_1, button_update_2, button_update_3
 
 
-def outpaint_predict(image, prompt, direction, expand_lenth, steps=50, scale=7.5, strength=0.8, seed=2022, lang='英文'):
+def outpaint_predict(image, prompt, direction, expand_lenth, steps=50, scale=7.5, strength=0.8, seed=2022):
     outpainting_max_side = MAX_SIDE - 192
     gc.collect()
     torch.cuda.empty_cache()
@@ -102,7 +102,7 @@ def outpaint_predict(image, prompt, direction, expand_lenth, steps=50, scale=7.5
     w, h = image.size
     empty_image = None
     prompt = check_empty_text_prompt(prompt)
-    if lang == '中文':
+    if is_contain_chinese(prompt):
         empty_image = check_prompt_to_empty_image(ChineseFilter, prompt)
         if empty_image:
             return empty_image, empty_image, button_update_1, button_update_2, button_update_3
@@ -177,7 +177,7 @@ def outpaint_predict(image, prompt, direction, expand_lenth, steps=50, scale=7.5
 
     return result_image, result_image_with_logo, button_update_1, button_update_2, button_update_3
 
-def multi2image_predict(init_img, prompt, width, height, steps=50, scale=7.5, strength=0.8, seed=2022, num_images=9, lang='英文'):
+def multi2image_predict(init_img, prompt, width, height, steps=50, scale=7.5, strength=0.8, seed=2022, num_images=9):
     gc.collect()
     torch.cuda.empty_cache()
     torch.cuda.ipc_collect()
@@ -187,7 +187,7 @@ def multi2image_predict(init_img, prompt, width, height, steps=50, scale=7.5, st
     button_update_3 = gr.Button.update(visible=False)
     empty_image = None
     prompt = check_empty_text_prompt(prompt)
-    if lang == '中文':
+    if is_contain_chinese(prompt):
         empty_image = check_prompt_to_empty_image(ChineseFilter, prompt)
         if empty_image:
             empty_images = [empty_image] * num_images
@@ -220,7 +220,7 @@ def multi2image_predict(init_img, prompt, width, height, steps=50, scale=7.5, st
 
     return grids, result_images, result_images_with_logo, button_update_1, button_update_2, button_update_3
 
-def variance_predict(prompt, width, height, steps=50, scale=7.5, strength=0.8, seed=2022, num_images=9, lang='英文'):
+def variance_predict(prompt, width, height, steps=50, scale=7.5, strength=0.8, seed=2022, num_images=9):
     gc.collect()
     torch.cuda.empty_cache()
     torch.cuda.ipc_collect()
@@ -228,7 +228,7 @@ def variance_predict(prompt, width, height, steps=50, scale=7.5, strength=0.8, s
     button_update = gr.Button.update(visible=True)
     empty_image = None
     prompt = check_empty_text_prompt(prompt)
-    if lang == '中文':
+    if is_contain_chinese(prompt):
         empty_image = check_prompt_to_empty_image(ChineseFilter, prompt)
         if empty_image:
             empty_images = [empty_image] * num_images
