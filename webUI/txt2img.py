@@ -38,6 +38,8 @@ import uuid
 from typing import Union
 from ldm.models.diffusion.ddim import DDIMSampler
 from ldm.models.diffusion.plms import PLMSSampler
+import torch
+from torchvision import transforms
 
 from model import AppModel
 
@@ -201,7 +203,7 @@ def layout():
                 st.write("")
 
         #with st.form("txt2img-outputs"):
-        la, qua, generate = st.columns([1, 4, 1.5], gap="large")
+        la, qua, generate,stop_col = st.columns([1, 6, 1.2, 0.8])
         with la:
             st.write("生成质量:")
             #st.markdown("""
@@ -220,6 +222,7 @@ def layout():
 
         #generate_button = generate.form_submit_button("开始生成")
         generate_button = generate.button("开始生成")
+        stop_button = stop_col.button("中止")
 
         ex_tab, guide_tab = st.tabs(["输入示例","输入引导"])
         with ex_tab:
@@ -316,6 +319,11 @@ def layout():
                     model = AppModel()
                     server_state["model"] = model
 
+            pil_image = transforms.ToPILImage()(torch.ones(3, 384, 512))
+            st.session_state["preview_image"].image(pil_image)
+            st.session_state["progress_bar_text"].text(
+                        f"""运行中: 0/{st.session_state.sampling_steps} 0%""")
+            st.session_state["progress_bar"].progress(0)
 
             if sampler_name == 'PLMS':
                 sampler = PLMSSampler(server_state["model"].model)
