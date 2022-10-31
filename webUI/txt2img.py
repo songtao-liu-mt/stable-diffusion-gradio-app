@@ -66,11 +66,15 @@ except:
 #     )
 
 LEXAMPLES = [
+"超写实老虎，黑纸，元素，白金，青色， 巴洛克， 洛可可， 水墨，细致，错综复杂的水墨插画",
+
 "一幅中国古代宫殿风景画的写实水彩画，远处是中国古代城墙的入口，背景是雾蒙蒙的山脉",
 
 "gta9游戏玩法，16k分辨率，超级未来主义的图像",
 
 "古埃及，繁荣，青翠的高科技城市，由greg rutkowski, alex grey创作的数字绘画，4k高清",
+
+"红海世界之树的美丽画作， 詹姆斯格尼印象派风格。 非常详细的细节。 幻想，超详细，清晰的焦点，柔和的光线。 光线追踪，由ivan aivazovsky 和 greg rutkowski 绘制",
 
 "Concept art painting of a cozy village in a mountainous forested valley, historic english and japanese architecture, realistic, detailed, cel shaded, in the style of makoto shinkai and greg rutkowski and james gurney",
 
@@ -171,12 +175,23 @@ def layout():
                         "图像输入", accept_multiple_files=False, type=["png", "jpg", "jpeg", "webp"],
                         help="Upload an image which will be used for the image to image generation.", label_visibility="collapsed",
                     )
-            image_holder = st.empty()
+            img_h, scale, _ = st.columns([2, 1, 0.3], )
+            with scale:
+                if uploaded_images:
+                    st.session_state["strength"] = st.slider("文本权重", min_value=0.1,
+                                                    max_value=0.99,
+                                                    step=0.01,
+                                                    value=0.8,
+                                                    disabled=disable_text,
+                                                    help="How strongly the image should follow the prompt.")
+            with img_h:
+                image_holder = st.empty()
             if uploaded_images:
                 image = Image.open(uploaded_images).convert('RGB')
                 new_img = image.resize((128, 128))
                 image_holder.image(new_img)
             else:
+                st.session_state["strength"] = -1
                 st.write("")
                 st.write("")
                 st.write("")
@@ -208,12 +223,14 @@ def layout():
 
         ex_tab, guide_tab = st.tabs(["输入示例","输入引导"])
         with ex_tab:
-            ex1 = st.button("一幅中国古代宫殿风景画的写实水彩画，远处是中国古代城墙的入口，背景是雾蒙蒙的山脉", on_click=example, kwargs={'index': 0})
-            ex2 = st.button("gta9游戏玩法，16k分辨率，超级未来主义的图像", on_click=example, kwargs={'index': 1})
-            ex3 = st.button("古埃及，繁荣，青翠的高科技城市，由greg rutkowski, alex grey创作的数字绘画，4k高清", on_click=example, kwargs={'index': 2})
-            ex4 = st.button("Concept art painting of a cozy village in a mountainous forested valley, historic english and japanese architecture, realistic, detailed, cel shaded,in the style of makoto shinkai and greg rutkowski and james gurney", on_click=example, kwargs={'index': 3})
-            ex5 = st.button("Amazon valkyrie athena, d & d, fantasy, portrait, highly detailed, headshot, digital painting, trending on artstation, concept art, sharp focus, illustration, art by artgerm and greg rutkowski and magali villeneuve", on_click=example, kwargs={'index': 4})
-            ex6 = st.button("Black haired little girl. her hair is very windy. she is in a black and white dress, that white dress has black triangles as a pattern. she is carrying a big glistening green diamond shaped crystal on her hands. art by artgerm and greg rutkowski and alphonse mucha and ian sprigger and wlop and krenz cushart", on_click=example, kwargs={'index': 5})
+            ex1 = st.button(LEXAMPLES[0], on_click=example, kwargs={'index': 0})
+            ex2 = st.button(LEXAMPLES[1], on_click=example, kwargs={'index': 1})
+            ex3 = st.button(LEXAMPLES[2], on_click=example, kwargs={'index': 2})
+            ex4 = st.button(LEXAMPLES[3], on_click=example, kwargs={'index': 3})
+            ex5 = st.button(LEXAMPLES[4], on_click=example, kwargs={'index': 4})
+            ex6 = st.button(LEXAMPLES[5], on_click=example, kwargs={'index': 5})
+            ex7 = st.button(LEXAMPLES[6], on_click=example, kwargs={'index': 6})
+            ex8 = st.button(LEXAMPLES[7], on_click=example, kwargs={'index': 7})
 
         with guide_tab:
             st.markdown(GUIDENCE)
@@ -253,16 +270,6 @@ def layout():
     st.session_state["update_preview"] = True
     st.session_state["update_preview_frequency"] = 5
 
-    if uploaded_images:
-        st.session_state["strength"] = 0.9
-        #st.session_state["strength"] = st.slider("文本权重", min_value=0.1,
-                                        #max_value=0.99,
-                                        #step=0.01,
-                                        #value=0.8,
-                                        #disabled=disable_text,
-                                        #help="How strongly the image should follow the prompt.")
-    else:
-        st.session_state["strength"] = -1
 
     # creating the page layout using columns
     #col1, col2, col3 = st.columns([1,2,1], gap="large")
