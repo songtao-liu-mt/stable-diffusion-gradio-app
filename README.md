@@ -12,10 +12,10 @@ bash download_weight.sh
 
 中间需要多次输入自己的hugging face账户和密码
 
-等待预训练模型下载完毕
+等待预训练模型下载完毕(大概有15个G，需要1个多小时，也可以联系liusongtao获取weight)
 
 ### 环境
-编译安装好mtPytorch和torchvision (**torchvision 一定不能用 pip install 安装！**)
+编译安装好mtPytorch和torchvision (**torchvision 一定不能用 pip install 安装！**
 再执行：
 ```
 pip install -r requiements.txt
