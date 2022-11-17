@@ -20,7 +20,8 @@ import gradio as gr
 
 __dir__ = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(__dir__)
-from diffusers_func import inpaint_predict, outpaint_predict, multi2image_predict, variance_predict, RealESGAN_warp
+from diffusers_func import inpaint_predict, outpaint_predict, multi2image_predict, variance_predict, text_predict, transfer_predict, RealESGAN_warp
+
 
 DESCRIPTION = '''# 摩尔线程马良 AIGC 创作平台
 '''
@@ -630,12 +631,6 @@ def main():
                                                         value=7.5,
 
                                                         label='尺度')
-                                    strength = gr.Slider(0.0,
-                                                            0.99,
-                                                            step=0.01,
-                                                            value=0.9,
-
-                                                            label='文本权重')
                                     seed = gr.Slider(0,
                                                         1000,
                                                         step=1,
@@ -664,7 +659,6 @@ def main():
                                     text_prompt,
                                     steps,
                                     scale,
-                                    strength,
                                     seed,
 
                                 ],
@@ -730,11 +724,6 @@ def main():
                                                         step=0.5,
                                                         value=7.5,
                                                         label='尺度')
-                                    strength = gr.Slider(0.0,
-                                                            0.99,
-                                                            step=0.01,
-                                                            value=0.9,
-                                                            label='文本权重')
                                     seed = gr.Slider(0,
                                                         1000,
                                                         step=1,
@@ -764,7 +753,6 @@ def main():
                                     expand_lenth,
                                     steps,
                                     scale,
-                                    strength,
                                     seed,
 
                                 ],
@@ -815,107 +803,88 @@ def main():
                                         result_tabs_hr
                                     ])
                 
-                # with gr.TabItem('扩展'):
-                    
-                #     def load_js(name):
-                #         if name in ["export", "commit", "undo"]:
-                #             return f"""
-                #     function (x)
-                #     {{  
-                #         let app=document.querySelector("gradio-app");
-                #         app=app.shadowRoot??app;
-                #         let frame=app.querySelector("#sdinfframe").contentWindow.document;
-                #         let button=frame.querySelector("#{name}");
-                #         button.click();
-                #         return x;
-                #     }}
-                #     """
-                #         ret = ""
-                #         with open(f"./js/{name}.js", "r") as f:
-                #             ret = f.read()
-                #         return ret
+                with gr.TabItem('图生文本'):
+                    with gr.Row():
+                        with gr.Column():
+                            init_img = gr.Image(type="pil", label="输入图像")
+                            run_button = gr.Button('运行生成', variant="primary")      
+                        with gr.Column():
+                            text_prompt = gr.Textbox(lines=3, label="预测文本")
+                            
+                    run_button.click(fn=text_predict,
+                                inputs=[
+                                    init_img,
+                                ],
+                                outputs=[
+                                    text_prompt,
+                                ])
 
 
-                #     proceed_button_js = load_js("proceed")
-                #     setup_button_js = load_js("setup")
-                    
-                    
-                #     RUN_IN_SPACE = False
-                #     with gr.Row(elem_id="setup_row"):
-                #         with gr.Column(scale=1, min_width=100):
-                #             canvas_width = gr.Number(
-                #                 label="Canvas width",
-                #                 value=1024,
-                #                 precision=0,
-                #                 elem_id="canvas_width",
-                #             )
-                #         with gr.Column(scale=1, min_width=100):
-                #             canvas_height = gr.Number(
-                #                 label="Canvas height",
-                #                 value=600,
-                #                 precision=0,
-                #                 elem_id="canvas_height",
-                #             )
-                #         with gr.Column(scale=1, min_width=100):
-                #             selection_size = gr.Number(
-                #                 label="Selection box size",
-                #                 value=256,
-                #                 precision=0,
-                #                 elem_id="selection_size",
-                #             )
-                #     setup_button = gr.Button("Click to Setup (may take a while)", variant="primary")
-                #     upload_button = gr.Button(
-                #                         "Before uploading the image you need to setup the canvas first", visible=False
-                #                     )
-                    
-                #     def load_html():
-                #         body, canvaspy = "", ""
-                #         with open("index.html", encoding="utf8") as f:
-                #             body = f.read()
-                #         with open("canvas.py", encoding="utf8") as f:
-                #             canvaspy = f.read()
-                #         body = body.replace("- paths:\n", "")
-                #         body = body.replace("  - ./canvas.py\n", "")
-                #         body = body.replace("from canvas import InfCanvas", canvaspy)
-                #         return body
-                    
-                #     def test(x):
-                #         x = load_html()
-                #         return f"""<iframe id="sdinfframe" style="width: 100%; height: 600px" name="result" allow="midi; geolocation; microphone; camera; 
-                #         display-capture; encrypted-media; vertical-scroll 'none'" sandbox="allow-modals allow-forms 
-                #         allow-scripts allow-same-origin allow-popups 
-                #         allow-top-navigation-by-user-activation allow-downloads" allowfullscreen="" 
-                #         allowpaymentrequest="" frameborder="0" srcdoc='{x}'></iframe>"""
-                        
-                #     frame = gr.HTML(test(2), visible=RUN_IN_SPACE)
-                    
-                #     def setup_func(canvas_width, canvas_height, selection_size):
-                #         canvas_width = gr.update(visible=False)
-                #         canvas_height = gr.update(visible=False)
-                #         selection_size = gr.update(visible=False)
-                #         setup_button = gr.update(visible=False)
-                #         frame = gr.update(visible=True)
-                #         upload_button = gr.update(value="Upload Image")
-                #         return  canvas_width, canvas_height, selection_size, setup_button, frame, upload_button
-                        
-            
-                #     setup_button.click(
-                #         fn=setup_func,
-                #         inputs=[
-                #             canvas_width,
-                #             canvas_height,
-                #             selection_size,
-                #         ],
-                #         outputs=[
-                #             canvas_width,
-                #             canvas_height,
-                #             selection_size,
-                #             setup_button,
-                #             frame,
-                #             upload_button
-                #         ],
-                #         _js=setup_button_js,
-                #     )
+
+
+                with gr.TabItem('风格转换'):
+                    with gr.Row():
+                        with gr.Row():
+                            with gr.Column():
+                                with gr.Tabs():
+                                    with gr.TabItem('内容图像输入'):
+                                        content_img = gr.Image(type="pil", label="初始图像最大边 768", source='upload')
+                                        gr.Examples(
+                                            label='内容图像示例',
+                                            examples=[
+                                                        os.path.join(os.path.dirname(__file__), "mt_images/logo.jpeg")
+                                                    ],
+                                            inputs=content_img,
+                                        )
+                            with gr.Column():
+                                with gr.Tabs():
+                                    with gr.TabItem('风格图像输入'):
+                                        style_img = gr.Image(type="pil", label="初始图像最大边 768", source='upload')
+                                        gr.Examples(
+                                            label='风格图像示例',
+                                            examples=[
+                                                        os.path.join(os.path.dirname(__file__), "mt_images/style/qibaishi.png"),
+                                                        os.path.join(os.path.dirname(__file__), "mt_images/style/xubeihong.png"),
+                                                        os.path.join(os.path.dirname(__file__), "mt_images/style/cyberpunk.png"),
+                                                    ],
+                                            inputs=style_img,
+                                        )
+                    with gr.Row():
+                        run_button = gr.Button('运行生成', variant="primary")
+                        confirm_button = gr.Button('确认', variant="primary", visible=False)        
+                                
+                    with gr.Column():
+                        with gr.Group():
+                            with gr.Tabs() as result_tabs_transfer:
+                                with gr.TabItem('生成结果'):
+                                    with gr.Group():
+                                        with gr.Row():
+                                            hr_button = gr.Button('生成高清图像', variant="primary", visible=False)
+                                    result_image_ori = gr.Image(show_label=False, interactive=False, visible=False)  
+                                    result_image = gr.Image(show_label=False, interactive=False)
+                                with gr.TabItem('超分辨率', id='hr_tab'):
+                                    with gr.TabItem('高清图像'):
+                                        hr_image = gr.Image(labels="高清图像", show_label=False, id='hr_outputs') 
+                                    with gr.TabItem('v.s. 原图'):
+                                        low_image = gr.Image(labels="原图", show_label=False)
+                
+                    run_button.click(fn=transfer_predict,
+                                inputs=[
+                                    content_img,
+                                    style_img
+
+                                ],
+                                outputs=[
+                                    result_image_ori,
+                                    result_image,
+                                    run_button,
+                                    hr_button
+                                ])
+                
+                    hr_button.click(fn=SR_model.run,
+                                        inputs=[result_image_ori],
+                                        outputs=[low_image, hr_image, result_tabs_outpainting]
+                                        ) 
                     
             with gr.TabItem('马良小助手'):
                 with gr.TabItem('流程演示'):
@@ -934,7 +903,7 @@ def main():
         
     demo.launch(
         server_name="0.0.0.0",
-        server_port=8084,
+        server_port=8081,
         enable_queue=True,
         share=args.share,
     )

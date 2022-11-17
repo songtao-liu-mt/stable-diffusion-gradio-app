@@ -11,7 +11,22 @@ import PIL
 import cv2
 import math
 import gc
-from diffusers_utils import paint_pipeline, image2image_pipeline, text2image_pipeline, translator_zh2en, deal_width_exceed_maxside, image_grid, GaussianBlur, device, MAX_SIDE, ChineseFilter, EnglishFilter, logo_image_pil, forbidden_pil, is_contain_chinese
+from diffusers_utils import (
+    paint_pipeline, 
+    image2image_pipeline, 
+    text2image_pipeline, 
+    translator_zh2en, 
+    image2text_pipeline,
+    deal_width_exceed_maxside, 
+    image_grid, 
+    MAX_SIDE, 
+    ChineseFilter, 
+    EnglishFilter, 
+    logo_image_pil, 
+    forbidden_pil, 
+    is_contain_chinese,
+    adain_trasfer
+)
 import gradio as gr
 import logging
 import re
@@ -51,10 +66,10 @@ def generate_images_with_logo(original_images):
 def check_empty_text_prompt(text_prompt):
     if len(text_prompt) == 0:
         logging.warn("There is no text content.")
-        return 'asdfghjkl'
+        return ' '
     return text_prompt
 
-def inpaint_predict(dict, prompt, steps=50, scale=7.5, strength=0.8, seed=42):
+def inpaint_predict(dict, prompt, steps=50, scale=7.5, seed=42):
     gc.collect()
     torch.cuda.empty_cache()
     torch.cuda.ipc_collect()
@@ -81,14 +96,14 @@ def inpaint_predict(dict, prompt, steps=50, scale=7.5, strength=0.8, seed=42):
         return empty_image, empty_image, button_update_1, button_update_2, button_update_3
     with autocast("cuda"):
         generator = torch.Generator("cuda").manual_seed(seed)
-        images = paint_pipeline(prompt=prompt, init_image=init_img, mask_image=mask_img, num_inference_steps=steps, guidance_scale=scale, strength=strength, generator=generator)["sample"]
+        images = paint_pipeline(prompt=prompt, init_image=init_img, mask_image=mask_img, height=h, width=w, num_inference_steps=steps, guidance_scale=scale, generator=generator)["images"]
         result_image = images[0]
     result_image_with_logo = generate_images_with_logo([result_image])[0]
 
     return result_image, result_image_with_logo, button_update_1, button_update_2, button_update_3
 
 
-def outpaint_predict(image, prompt, direction, expand_lenth, steps=50, scale=7.5, strength=0.8, seed=2022):
+def outpaint_predict(image, prompt, direction, expand_lenth, steps=50, scale=7.5, seed=2022):
     outpainting_max_side = MAX_SIDE - 192
     gc.collect()
     torch.cuda.empty_cache()
@@ -167,11 +182,12 @@ def outpaint_predict(image, prompt, direction, expand_lenth, steps=50, scale=7.5
     mask_img = Image.new(mode="RGB", size=(w_expanded, h_expanded), color="white")
     invert_mask = Image.new(mode="RGB", size=(w, h), color="black")
     mask_img.paste(im=invert_mask, box=left_upper)
-    # mask_img = mask_img.filter(GaussianBlur(radius=1))
+    
+    
     
     with autocast("cuda"):
         generator = torch.Generator("cuda").manual_seed(seed)
-        images = paint_pipeline(prompt=prompt, init_image=init_img, mask_image=mask_img, num_inference_steps=steps, guidance_scale=scale, strength=strength, generator=generator)["sample"]
+        images = paint_pipeline(prompt=prompt, init_image=init_img, mask_image=mask_img, num_inference_steps=steps, guidance_scale=scale, generator=generator)["images"]
         result_image = images[0]
     result_image_with_logo = generate_images_with_logo([result_image])[0]
 
@@ -204,15 +220,15 @@ def multi2image_predict(init_img, prompt, width, height, steps=50, scale=7.5, st
         with autocast("cuda"):
             for i in range(num_images):
                 generator = torch.Generator("cuda").manual_seed(seed + i)
-                images = image2image_pipeline(prompt=prompt, init_image=init_img, num_inference_steps=steps, guidance_scale=scale, strength=strength, generator=generator)["sample"]
+                images = image2image_pipeline(prompt=prompt, init_image=init_img, num_inference_steps=steps, guidance_scale=scale, strength=strength, generator=generator)["images"]
                 result_images.append(images[0])
     else:
         with autocast("cuda"):
             for i in range(num_images):
                 generator = torch.Generator("cuda").manual_seed(seed + i)
-                images = text2image_pipeline(prompt=prompt, height=height, width=width, num_inference_steps=steps, guidance_scale=scale, strength=strength, generator=generator)["sample"]
+                images = text2image_pipeline(prompt=prompt, height=height, width=width, num_inference_steps=steps, guidance_scale=scale, strength=strength, generator=generator)["images"]
                 result_images.append(images[0])
-                
+                # images[0].save('logos/{:05d}.png'.format(i))
     
     grids = image_grid(result_images)
     grids = generate_images_with_logo([grids])[0]
@@ -241,12 +257,12 @@ def variance_predict(prompt, width, height, steps=50, scale=7.5, strength=0.8, s
         return grids, empty_images, empty_images, button_update
     result_images = []
     with autocast("cuda"):
-        init_imgs = text2image_pipeline(prompt=prompt, height=height, width=width)["sample"]
+        init_imgs = text2image_pipeline(prompt=prompt, height=height, width=width)["images"]
         init_img = init_imgs[0]
         result_images.append(init_img)
         for i in range(num_images - 1):
             generator = torch.Generator("cuda").manual_seed(seed + i)
-            images = image2image_pipeline(prompt=prompt, init_image=init_img, num_inference_steps=steps, guidance_scale=scale, strength=strength, generator=generator)["sample"]
+            images = image2image_pipeline(prompt=prompt, init_image=init_img, num_inference_steps=steps, guidance_scale=scale, strength=strength, generator=generator)["images"]
 
             result_images.append(images[0])
             
@@ -277,3 +293,28 @@ class RealESGAN_warp:
         tab_update = gr.update(selected='hr_tab')
             
         return image, res, tab_update
+    
+def transfer_predict(content_pil, style_pil):
+    gc.collect()
+    torch.cuda.empty_cache()
+    torch.cuda.ipc_collect()
+
+    button_update_1 = gr.Button.update(value='重新生成')
+    button_update_2 = gr.Button.update(visible=True)
+    
+
+    content_pil = deal_width_exceed_maxside(content_pil)
+    
+    result_image = adain_trasfer(content_pil, style_pil)
+    result_image_with_logo = generate_images_with_logo([result_image])[0]
+
+    return result_image, result_image_with_logo, button_update_1, button_update_2
+
+def text_predict(image):
+    gc.collect()
+    torch.cuda.empty_cache()
+    torch.cuda.ipc_collect()
+    text = image2text_pipeline(image)
+    return text
+
+

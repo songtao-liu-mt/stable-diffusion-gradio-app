@@ -1,1 +1,1 @@
-from .painting import inpaint_predict, outpaint_predict, multi2image_predict, variance_predict, RealESGAN_warp
+from .painting import inpaint_predict, outpaint_predict, multi2image_predict, variance_predict, text_predict, transfer_predict, RealESGAN_warp

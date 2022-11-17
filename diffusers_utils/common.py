@@ -5,21 +5,6 @@ import base64
 import gradio as gr
 import math
 import torch
-
-
-class GaussianBlur(ImageFilter.Filter):
-    
-    def __init__(self, radius=100, bounds=None):
-        self.radius = radius
-        self.bounds = bounds
-    
-    def filter(self, image):
-        if self.bounds:
-            clips = image.crop(self.bounds).gaussian_blur(self.radius)
-            image.paste(clips, self.bounds)
-            return image
-        else:
-            return image.gaussian_blur(self.radius)
         
 def copy_res_to_img(img, index):
     try:
