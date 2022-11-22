@@ -21,8 +21,7 @@ class AdaINWrapper():
         self.decoder_path = 'models/adain/decoder.pth'
         self.transforms = transforms.Compose([
                                               transforms.ToTensor(),
-                ]
-                )
+                ])
         print('loading the adain vgg and decoder models...')
         self.load_models()
         
@@ -32,12 +31,6 @@ class AdaINWrapper():
         self.decoder.load_state_dict(torch.load(self.decoder_path))
         self.vgg.to(self.device)
         self.decoder.to(self.device)
-        
-    def test_transform(self):
-        transform_list = []
-        transform_list.append(transforms.ToTensor())
-        transform = transforms.Compose(transform_list)
-        return transform
     
     def style_transfer(self, content, style):
         assert (0.0 <= self.alpha <= 1.0)

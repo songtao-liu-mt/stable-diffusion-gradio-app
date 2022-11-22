@@ -11,7 +11,7 @@ import PIL
 import cv2
 import math
 import gc
-from diffusers_utils import (
+from maliang_utils import (
     paint_pipeline, 
     image2image_pipeline, 
     text2image_pipeline, 
@@ -25,7 +25,8 @@ from diffusers_utils import (
     logo_image_pil, 
     forbidden_pil, 
     is_contain_chinese,
-    adain_trasfer
+    adain_trasfer,
+    clipseg
 )
 import gradio as gr
 import logging
@@ -102,6 +103,21 @@ def inpaint_predict(dict, prompt, steps=50, scale=7.5, seed=42):
 
     return result_image, result_image_with_logo, button_update_1, button_update_2, button_update_3
 
+def replaced_predict(init_img, part_prompt, result_prompt, steps=50, scale=7.5, seed=42):
+    mask, edge = clipseg(part_prompt, init_img)
+    h = 512
+    w = 512
+    init_img = init_img.resize((512, 512)).convert('RGB')
+    with autocast("cuda"):
+        generator = torch.Generator("cuda").manual_seed(seed)
+        images = paint_pipeline(prompt=result_prompt, init_image=init_img, mask_image=mask, height=h, width=w, num_inference_steps=steps, guidance_scale=scale, generator=generator)["images"]
+        # images = paint_pipeline(prompt=' ', init_image=images[0], mask_image=edge, height=h, width=w, num_inference_steps=steps, guidance_scale=scale, generator=generator)["images"]
+        result_image = images[0]
+    result_image_with_logo = generate_images_with_logo([result_image])[0]
+
+    return result_image, result_image_with_logo
+    
+    
 
 def outpaint_predict(image, prompt, direction, expand_lenth, steps=50, scale=7.5, seed=2022):
     outpainting_max_side = MAX_SIDE - 192

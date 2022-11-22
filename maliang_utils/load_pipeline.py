@@ -61,18 +61,17 @@ def prepare_mask_and_masked_image(image, mask):
     image = image[None].transpose(0, 3, 1, 2)
     image = torch.from_numpy(image).to(dtype=torch.float32) / 127.5 - 1.0
     
-    mask = mask.filter(GaussianBlur(radius=11))
-    mask.save('temp.jpg')
+    # mask = mask.filter(GaussianBlur(radius=))
     mask = np.array(mask.convert("L"))
-    mask = mask.astype(np.float32) / 255.0
-    mask = mask[None, None]
+    mask_np = mask.astype(np.float32) / 255.0
+    mask = mask_np[None, None]
     # mask[mask < 0.5] = 0
     # mask[mask >= 0.5] = 1
     mask = torch.from_numpy(mask)
 
     masked_image = image * (mask < 0.5)
 
-    return mask, masked_image
+    return mask, masked_image, mask_np
 
 
 class StableDiffusionBasePipeline(DiffusionPipeline):
@@ -822,7 +821,7 @@ class SDInpaint(StableDiffusionBasePipeline):
 
         # 4. Preprocess mask and image
         if isinstance(init_image, PIL.Image.Image) and isinstance(mask_image, PIL.Image.Image):
-            mask, masked_image = prepare_mask_and_masked_image(init_image, mask_image)
+            mask, masked_image, mask_np = prepare_mask_and_masked_image(init_image, mask_image)
 
         # 5. set timesteps
         self.scheduler.set_timesteps(num_inference_steps, device=device)
@@ -896,11 +895,16 @@ class SDInpaint(StableDiffusionBasePipeline):
 
         # 11. Post-processing
         image = self.decode_latents(latents)
-        mask = mask.cpu().permute(0, 2, 3, 1).float().numpy()
-        image_inpaint = image * (mask > 0.5)
-        masked_image = (masked_image / 2 + 0.5).clamp(0, 1)
-        masked_image = masked_image.cpu().permute(0, 2, 3, 1).float().numpy()
-        image = masked_image * (mask <= 0.5) + image_inpaint
+        # mask = mask.cpu().permute(0, 2, 3, 1).float().numpy()
+        # image_inpaint = image * (mask > 0.5)
+        mask_np = mask_np[None, :, :, None]
+        image_inpaint = image * mask_np
+        # masked_image = (masked_image / 2 + 0.5).clamp(0, 1)
+        # masked_image = masked_image.cpu().permute(0, 2, 3, 1).float().numpy()
+        # image = masked_image * (mask <= 0.5) + image_inpaint
+        # image = (255 - np.array(init_image.convert('RGB'))) * (1 - mask) + image_inpaint
+        image_ori = np.array(init_image.convert('RGB')).astype(np.float32) / 255.
+        image = image_ori * (1 - mask_np[0]) + image_inpaint
 
         # 12. Run safety checker
         # image, has_nsfw_concept = self.run_safety_checker(image, device, text_embeddings.dtype)
@@ -917,28 +921,24 @@ class SDInpaint(StableDiffusionBasePipeline):
     
 print('prepare vae models...')
 vae = AutoencoderKL.from_pretrained(
-    'runwayml/stable-diffusion-v1-5',
+    'models/diffusers/runwayml/stable-diffusion-v1-5',
     # 'IDEA-CCNL/Taiyi-Stable-Diffusion-1B-Chinese-EN-v0.1',
     subfolder='vae',
     revision="fp16", 
     torch_dtype=torch.float16,
-    use_auth_token=True
+    use_auth_token=False
 ).to(device)
 
-# print('prepare inpainting vae models...')
-# vae_inpaint = AutoencoderKL.from_pretrained(
-#     'runwayml/stable-diffusion-inpainting',
-#     # 'IDEA-CCNL/Taiyi-Stable-Diffusion-1B-Chinese-EN-v0.1',
-#     subfolder='vae',
-#     revision="fp16", 
-#     torch_dtype=torch.float16,
-#     use_auth_token=True
-# ).to(device)
+
 
 print('prepare clip text models...')
-tokenizer = CLIPTokenizer.from_pretrained('openai/clip-vit-large-patch14')
+tokenizer = CLIPTokenizer.from_pretrained(
+    # 'openai/clip-vit-large-patch14',
+    'models/diffusers/runwayml/stable-diffusion-v1-5/tokenizer'
+    )
 text_encoder = CLIPTextModel.from_pretrained(
-    'openai/clip-vit-large-patch14',
+    # 'openai/clip-vit-large-patch14',
+    'models/diffusers/runwayml/stable-diffusion-v1-5/text_encoder',
     # revision="fp16", 
     # torch_dtype=torch.float16,
 ).to(device)
@@ -949,22 +949,22 @@ text_encoder = CLIPTextModel.from_pretrained(
 
 print('prepare attention unet models...')
 unet = UNet2DConditionModel.from_pretrained(
-    'runwayml/stable-diffusion-v1-5',
+    'models/diffusers/runwayml/stable-diffusion-v1-5',
     # 'IDEA-CCNL/Taiyi-Stable-Diffusion-1B-Chinese-EN-v0.1',
     subfolder='unet',
     revision="fp16", 
     torch_dtype=torch.float16,
-    use_auth_token=True
+    use_auth_token=False
 ).to(device)
 
 print('prepare attention inpaint unet models...')
 unet_inpaint = UNet2DConditionModel.from_pretrained(
-    'runwayml/stable-diffusion-inpainting',
+    'models/diffusers/runwayml/stable-diffusion-inpainting',
     # 'IDEA-CCNL/Taiyi-Stable-Diffusion-1B-Chinese-EN-v0.1',
     subfolder='unet',
     revision="fp16", 
     torch_dtype=torch.float16,
-    use_auth_token=True
+    use_auth_token=False
 ).to(device)
 
 ddim_scheduler = DDIMScheduler(
@@ -1059,9 +1059,13 @@ class Translator:
         return self.tokenizer.batch_decode(translation, skip_special_tokens=False)[0]
 translator_zh2en = Translator(model_path='models/opus_mt')
 
-from adain.adain_model import AdaINWrapper
+from adain.adain_wrapper import AdaINWrapper
 
 adain_trasfer = AdaINWrapper(device=device)
+
+from clipseg.clipseg_wrapper import CLIPSegWrapper
+clipseg = CLIPSegWrapper(device=device)
+
 
 logo_image_pil = Image.open('mt_images/maliang_mt_logo.png').convert('RGB')
 forbidden_pil = Image.open('mt_images/forbidden.jpg').resize((1000, 1000)).convert('RGB')

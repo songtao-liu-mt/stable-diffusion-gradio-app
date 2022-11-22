@@ -8,6 +8,7 @@ from .load_pipeline import (
     EnglishFilter, 
     logo_image_pil, 
     forbidden_pil,
-    adain_trasfer
+    adain_trasfer,
+    clipseg,
 )
 from .common import deal_width_exceed_maxside, copy_res_to_img, image_grid, MAX_SIDE, is_contain_chinese

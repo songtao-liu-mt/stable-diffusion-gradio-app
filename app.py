@@ -20,7 +20,7 @@ import gradio as gr
 
 __dir__ = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(__dir__)
-from diffusers_func import inpaint_predict, outpaint_predict, multi2image_predict, variance_predict, text_predict, transfer_predict, RealESGAN_warp
+from maliang_func import inpaint_predict, outpaint_predict, multi2image_predict, variance_predict, text_predict, transfer_predict, replaced_predict, RealESGAN_warp
 
 
 DESCRIPTION = '''# 摩尔线程马良 AIGC 创作平台
@@ -886,6 +886,65 @@ def main():
                                         outputs=[low_image, hr_image, result_tabs_outpainting]
                                         ) 
                     
+                    
+                with gr.TabItem('调换零部件'):
+                    with gr.Row():
+                        with gr.Row():
+                            with gr.Column():
+                                with gr.Tabs():
+                                    with gr.TabItem('内容图像输入'):
+                                        init_img = gr.Image(type="pil", label="初始图像最大边 768", source='upload')
+                                        gr.Examples(
+                                            label='内容图像示例',
+                                            examples=[
+                                                        os.path.join(os.path.dirname(__file__), "mt_images/xiawei.png")
+                                                    ],
+                                            inputs=init_img,
+                                        )
+                            with gr.Column():
+                                with gr.Tabs():
+                                    with gr.TabItem('需要调整的部位'):
+                                        part_prompt = gr.Textbox(lines=3, label="调整部位")
+                                    with gr.TabItem('调整之后的样子'):
+                                        replaced_prompt = gr.Textbox(lines=3, label="改变的模样")
+                                        
+                                        
+                    with gr.Row():
+                        run_button = gr.Button('运行生成', variant="primary")
+                        confirm_button = gr.Button('确认', variant="primary", visible=False)        
+                                
+                    with gr.Column():
+                        with gr.Group():
+                            with gr.Tabs() as result_tabs_replaced:
+                                with gr.TabItem('生成结果'):
+                                    with gr.Group():
+                                        with gr.Row():
+                                            hr_button = gr.Button('生成高清图像', variant="primary", visible=False)
+                                    result_image_ori = gr.Image(show_label=False, interactive=False, visible=False)  
+                                    result_image = gr.Image(show_label=False, interactive=False)
+                                # with gr.TabItem('超分辨率', id='hr_tab'):
+                                #     with gr.TabItem('高清图像'):
+                                #         hr_image = gr.Image(labels="高清图像", show_label=False, id='hr_outputs') 
+                                #     with gr.TabItem('v.s. 原图'):
+                                #         low_image = gr.Image(labels="原图", show_label=False)
+                
+                    run_button.click(fn=replaced_predict,
+                                inputs=[
+                                    init_img,
+                                    part_prompt,
+                                    replaced_prompt
+                                ],
+                                outputs=[
+                                    result_image_ori,
+                                    result_image,
+                                    # run_button,
+                                    # hr_button
+                                ])
+                
+                    # hr_button.click(fn=SR_model.run,
+                    #                     inputs=[result_image_ori],
+                    #                     outputs=[low_image, hr_image, result_tabs_outpainting]
+                    #                     ) 
             with gr.TabItem('马良小助手'):
                 with gr.TabItem('流程演示'):
                     gr.Video(value='demos/maliang_platform.mp4',
@@ -903,7 +962,7 @@ def main():
         
     demo.launch(
         server_name="0.0.0.0",
-        server_port=8081,
+        server_port=8083,
         enable_queue=True,
         share=args.share,
     )
