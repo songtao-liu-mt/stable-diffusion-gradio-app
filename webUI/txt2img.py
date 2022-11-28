@@ -143,6 +143,14 @@ class plugin_info():
 
 
 def layout():
+    with hc.HyLoader('Loading Models...', hc.Loaders.standard_loaders,index=[0]):
+        if "model" in server_state:
+            print("Already loaded model")
+            model = server_state["model"]
+        else:
+            model = AppModel()
+            server_state["model"] = model
+
     st.session_state["generation_mode"] = "txt2img"
     #txt_tab,img_tab = st.tabs(["文字输入","图片输入"])
     input_col1_txt, img_col = st.columns([1, 1], gap="large")
@@ -306,18 +314,9 @@ def layout():
                                                                         #help="Frequency in steps at which the the preview image is updated. By default the frequency \
                                                                         #is set to 10 step.")
 
-
-
     if generate_button:
 
         with img_col:
-            with hc.HyLoader('Loading Models...', hc.Loaders.standard_loaders,index=[0]):
-                if "model" in server_state:
-                    print("Already loaded model")
-                    model = server_state["model"]
-                else:
-                    model = AppModel()
-                    server_state["model"] = model
 
             pil_image = transforms.ToPILImage()(torch.ones(3, 384, 512))
             st.session_state["preview_image"].image(pil_image)
