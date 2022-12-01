@@ -28,6 +28,8 @@ from PIL import Image, ImageFilter
 import gc
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 from mt_filter.sensewords import ChineseFilter, EnglishFilter
+
+import musa_torch_extension
 from system_config import device
 
 
@@ -478,7 +480,7 @@ class SDText2Img(StableDiffusionBasePipeline):
 
         # 4. Prepare timesteps
         self.scheduler.set_timesteps(num_inference_steps, device=device)
-        timesteps = self.scheduler.timesteps
+        timesteps = self.scheduler.timesteps.to(torch.float)
 
         # 5. Prepare latent variables
         num_channels_latents = self.unet.in_channels
@@ -511,7 +513,7 @@ class SDText2Img(StableDiffusionBasePipeline):
                 noise_pred = noise_pred_uncond + guidance_scale * (noise_pred_text - noise_pred_uncond)
 
             # compute the previous noisy sample x_t -> x_t-1
-            latents = self.scheduler.step(noise_pred, t, latents, **extra_step_kwargs).prev_sample
+            latents = self.scheduler.step(noise_pred, t.cpu().int(), latents, **extra_step_kwargs).prev_sample
 
             # call the callback, if provided
             if callback is not None and i % callback_steps == 0:
@@ -532,6 +534,7 @@ class SDText2Img(StableDiffusionBasePipeline):
             return (image, has_nsfw_concept)
 
         return StableDiffusionPipelineOutput(images=image, nsfw_content_detected=has_nsfw_concept)
+    
 class SDImg2Img(StableDiffusionBasePipeline):
     def __init__(
             self,
@@ -924,8 +927,8 @@ vae = AutoencoderKL.from_pretrained(
     'models/diffusers/runwayml/stable-diffusion-v1-5',
     # 'IDEA-CCNL/Taiyi-Stable-Diffusion-1B-Chinese-EN-v0.1',
     subfolder='vae',
-    revision="fp16", 
-    torch_dtype=torch.float16,
+    revision="fp32", 
+    torch_dtype=torch.float32,
     use_auth_token=False
 ).to(device)
 
@@ -952,20 +955,20 @@ unet = UNet2DConditionModel.from_pretrained(
     'models/diffusers/runwayml/stable-diffusion-v1-5',
     # 'IDEA-CCNL/Taiyi-Stable-Diffusion-1B-Chinese-EN-v0.1',
     subfolder='unet',
-    revision="fp16", 
-    torch_dtype=torch.float16,
+    revision="fp32", 
+    torch_dtype=torch.float32,
     use_auth_token=False
 ).to(device)
 
-print('prepare attention inpaint unet models...')
-unet_inpaint = UNet2DConditionModel.from_pretrained(
-    'models/diffusers/runwayml/stable-diffusion-inpainting',
-    # 'IDEA-CCNL/Taiyi-Stable-Diffusion-1B-Chinese-EN-v0.1',
-    subfolder='unet',
-    revision="fp16", 
-    torch_dtype=torch.float16,
-    use_auth_token=False
-).to(device)
+# print('prepare attention inpaint unet models...')
+# unet_inpaint = UNet2DConditionModel.from_pretrained(
+#     'models/diffusers/runwayml/stable-diffusion-inpainting',
+#     # 'IDEA-CCNL/Taiyi-Stable-Diffusion-1B-Chinese-EN-v0.1',
+#     subfolder='unet',
+#     revision="fp32", 
+#     torch_dtype=torch.float32,
+#     use_auth_token=False
+# ).to(device)
 
 ddim_scheduler = DDIMScheduler(
     num_train_timesteps=1000,
@@ -979,7 +982,12 @@ pndm_scheduler = PNDMScheduler(
     beta_end=0.012,
     beta_schedule="scaled_linear"
 )
-
+euler_scheduler = EulerDiscreteScheduler(
+    num_train_timesteps=1000,
+    beta_start=0.0001,
+    beta_end=0.02,
+    beta_schedule="linear"
+)
 
 text2image_pipeline = SDText2Img(
     vae=vae,
@@ -1003,7 +1011,7 @@ paint_pipeline = SDInpaint(
     vae=vae,
     text_encoder=text_encoder,
     tokenizer=tokenizer,
-    unet=unet_inpaint,
+    unet=unet,
     scheduler=pndm_scheduler
 )
 image2image_pipeline = SDImg2Img(
@@ -1070,5 +1078,5 @@ clipseg = CLIPSegWrapper(device=device)
 logo_image_pil = Image.open('mt_images/maliang_mt_logo.png').convert('RGB')
 forbidden_pil = Image.open('mt_images/forbidden.jpg').resize((1000, 1000)).convert('RGB')
 gc.collect()
-torch.cuda.empty_cache()
-torch.cuda.ipc_collect()
+# torch.cuda.empty_cache()
+# torch.cuda.ipc_collect()

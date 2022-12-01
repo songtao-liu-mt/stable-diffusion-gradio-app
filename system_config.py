@@ -1,1 +1,1 @@
-device = 'cuda:1'
+device = 'mtgpu'

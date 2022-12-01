@@ -13,8 +13,11 @@ import mimetypes
 import base64
 import json
 import torch
+import gc
 
 import gradio as gr
+import os
+os.environ["MTGPU_MAX_MEM_USAGE_GB"]="13"
 
 
 
@@ -73,8 +76,9 @@ def readTextFile(*args):
     return data
 
 def torch_gc():
-    torch.cuda.empty_cache()
-    torch.cuda.ipc_collect()
+    # torch.cuda.empty_cache()
+    # torch.cuda.ipc_collect()
+    gc.collect()
 
 def js():
     data = readTextFile("js", "index.js")

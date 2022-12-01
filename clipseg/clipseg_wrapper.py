@@ -23,7 +23,7 @@ class CLIPSegWrapper():
         print("loading the clipseg models...")
         self.load_models()
     def load_models(self):
-        self.model.load_state_dict(torch.load('models/clipseg/rd64-uni.pth', map_location=torch.device(self.device)), strict=False)
+        self.model.load_state_dict(torch.load('models/clipseg/rd64-uni.pth', map_location='cpu'), strict=False)
     
     def get_mask_edge(self, mask):
         mask = np.array(mask)

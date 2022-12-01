@@ -72,8 +72,8 @@ def check_empty_text_prompt(text_prompt):
 
 def inpaint_predict(dict, prompt, steps=50, scale=7.5, seed=42):
     gc.collect()
-    torch.cuda.empty_cache()
-    torch.cuda.ipc_collect()
+    # torch.cuda.empty_cache()
+    # torch.cuda.ipc_collect()
 
     button_update_1 = gr.Button.update(value='重新生成')
     button_update_2 = gr.Button.update(visible=True)
@@ -95,8 +95,8 @@ def inpaint_predict(dict, prompt, steps=50, scale=7.5, seed=42):
     empty_image = check_prompt_to_empty_image(EnglishFilter, prompt)
     if empty_image:
         return empty_image, empty_image, button_update_1, button_update_2, button_update_3
-    with autocast("cuda"):
-        generator = torch.Generator("cuda").manual_seed(seed)
+    with torch.autograd.inference_mode(mode=True):
+        generator = torch.Generator("cpu").manual_seed(seed)
         images = paint_pipeline(prompt=prompt, init_image=init_img, mask_image=mask_img, height=h, width=w, num_inference_steps=steps, guidance_scale=scale, generator=generator)["images"]
         result_image = images[0]
     result_image_with_logo = generate_images_with_logo([result_image])[0]
@@ -108,8 +108,8 @@ def replaced_predict(init_img, part_prompt, result_prompt, steps=50, scale=7.5, 
     h = 512
     w = 512
     init_img = init_img.resize((512, 512)).convert('RGB')
-    with autocast("cuda"):
-        generator = torch.Generator("cuda").manual_seed(seed)
+    with torch.autograd.inference_mode(mode=True):
+        generator = torch.Generator("cpu").manual_seed(seed)
         images = paint_pipeline(prompt=result_prompt, init_image=init_img, mask_image=mask, height=h, width=w, num_inference_steps=steps, guidance_scale=scale, generator=generator)["images"]
         # images = paint_pipeline(prompt=' ', init_image=images[0], mask_image=edge, height=h, width=w, num_inference_steps=steps, guidance_scale=scale, generator=generator)["images"]
         result_image = images[0]
@@ -122,8 +122,8 @@ def replaced_predict(init_img, part_prompt, result_prompt, steps=50, scale=7.5, 
 def outpaint_predict(image, prompt, direction, expand_lenth, steps=50, scale=7.5, seed=2022):
     outpainting_max_side = MAX_SIDE - 192
     gc.collect()
-    torch.cuda.empty_cache()
-    torch.cuda.ipc_collect()
+    # torch.cuda.empty_cache()
+    # torch.cuda.ipc_collect()
     
     button_update_1 = gr.Button.update(value='重新生成')
     button_update_2 = gr.Button.update(visible=True)
@@ -201,8 +201,8 @@ def outpaint_predict(image, prompt, direction, expand_lenth, steps=50, scale=7.5
     
     
     
-    with autocast("cuda"):
-        generator = torch.Generator("cuda").manual_seed(seed)
+    with torch.autograd.inference_mode(mode=True):
+        generator = torch.Generator("cpu").manual_seed(seed)
         images = paint_pipeline(prompt=prompt, init_image=init_img, mask_image=mask_img, num_inference_steps=steps, guidance_scale=scale, generator=generator)["images"]
         result_image = images[0]
     result_image_with_logo = generate_images_with_logo([result_image])[0]
@@ -211,8 +211,8 @@ def outpaint_predict(image, prompt, direction, expand_lenth, steps=50, scale=7.5
 
 def multi2image_predict(init_img, prompt, width, height, steps=50, scale=7.5, strength=0.8, seed=2022, num_images=9):
     gc.collect()
-    torch.cuda.empty_cache()
-    torch.cuda.ipc_collect()
+    # torch.cuda.empty_cache()
+    # torch.cuda.ipc_collect()
     
     button_update_1 = gr.Button.update(value='重新生成')
     button_update_2 = gr.Button.update(visible=True)
@@ -233,15 +233,15 @@ def multi2image_predict(init_img, prompt, width, height, steps=50, scale=7.5, st
     if init_img is not None:
         init_img = init_img.convert("RGB").resize((width, height))
         
-        with autocast("cuda"):
+        with torch.autograd.inference_mode(mode=True):
             for i in range(num_images):
-                generator = torch.Generator("cuda").manual_seed(seed + i)
+                generator = torch.Generator("cpu").manual_seed(seed + i)
                 images = image2image_pipeline(prompt=prompt, init_image=init_img, num_inference_steps=steps, guidance_scale=scale, strength=strength, generator=generator)["images"]
                 result_images.append(images[0])
     else:
-        with autocast("cuda"):
+        with torch.autograd.inference_mode(mode=True):
             for i in range(num_images):
-                generator = torch.Generator("cuda").manual_seed(seed + i)
+                generator = torch.Generator("cpu").manual_seed(seed + i)
                 images = text2image_pipeline(prompt=prompt, height=height, width=width, num_inference_steps=steps, guidance_scale=scale, strength=strength, generator=generator)["images"]
                 result_images.append(images[0])
                 # images[0].save('logos/{:05d}.png'.format(i))
@@ -254,8 +254,8 @@ def multi2image_predict(init_img, prompt, width, height, steps=50, scale=7.5, st
 
 def variance_predict(prompt, width, height, steps=50, scale=7.5, strength=0.8, seed=2022, num_images=9):
     gc.collect()
-    torch.cuda.empty_cache()
-    torch.cuda.ipc_collect()
+    # torch.cuda.empty_cache()
+    # torch.cuda.ipc_collect()
     
     button_update = gr.Button.update(visible=True)
     empty_image = None
@@ -272,12 +272,12 @@ def variance_predict(prompt, width, height, steps=50, scale=7.5, strength=0.8, s
         grids = image_grid(empty_images)
         return grids, empty_images, empty_images, button_update
     result_images = []
-    with autocast("cuda"):
+    with torch.autograd.inference_mode(mode=True):
         init_imgs = text2image_pipeline(prompt=prompt, height=height, width=width)["images"]
         init_img = init_imgs[0]
         result_images.append(init_img)
         for i in range(num_images - 1):
-            generator = torch.Generator("cuda").manual_seed(seed + i)
+            generator = torch.Generator("cpu").manual_seed(seed + i)
             images = image2image_pipeline(prompt=prompt, init_image=init_img, num_inference_steps=steps, guidance_scale=scale, strength=strength, generator=generator)["images"]
 
             result_images.append(images[0])
@@ -312,8 +312,8 @@ class RealESGAN_warp:
     
 def transfer_predict(content_pil, style_pil):
     gc.collect()
-    torch.cuda.empty_cache()
-    torch.cuda.ipc_collect()
+    # torch.cuda.empty_cache()
+    # torch.cuda.ipc_collect()
 
     button_update_1 = gr.Button.update(value='重新生成')
     button_update_2 = gr.Button.update(visible=True)
@@ -328,8 +328,8 @@ def transfer_predict(content_pil, style_pil):
 
 def text_predict(image):
     gc.collect()
-    torch.cuda.empty_cache()
-    torch.cuda.ipc_collect()
+    # torch.cuda.empty_cache()
+    # torch.cuda.ipc_collect()
     text = image2text_pipeline(image)
     return text
 
