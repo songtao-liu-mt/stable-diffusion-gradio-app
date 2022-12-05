@@ -34,6 +34,7 @@ from system_config import device
 
 
 logger = logging.get_logger(__name__)  # pylint: disable=invalid-name
+negtive_prompt = "Deformed, blurry, bad anatomy, disfigured, poorly drawn face, mutation, mutated, extra limb, ugly, poorly drawn hands, missing limb, blurry, floating limbs, disconnected limbs, malformed hands, blur, out of focus, long neck, long body, ((((mutated hands and fingers)))), (((out of frame)))"
 
 class GaussianBlur(ImageFilter.Filter):
     
@@ -445,20 +446,20 @@ class SDText2Img(StableDiffusionBasePipeline):
     @torch.no_grad()
     def __call__(
         self,
-        prompt: Union[str, List[str]],
-        height: int = 512,
-        width: int = 512,
-        num_inference_steps: int = 50,
-        guidance_scale: float = 7.5,
-        negative_prompt: Optional[Union[str, List[str]]] = None,
-        num_images_per_prompt: Optional[int] = 1,
-        eta: float = 0.0,
-        generator: Optional[torch.Generator] = None,
-        latents: Optional[torch.FloatTensor] = None,
-        output_type: Optional[str] = "pil",
-        return_dict: bool = True,
-        callback: Optional[Callable[[int, int, torch.FloatTensor], None]] = None,
-        callback_steps: Optional[int] = 1,
+        prompt,
+        height= 512,
+        width = 512,
+        num_inference_steps = 50,
+        guidance_scale = 7.5,
+        negative_prompt = negtive_prompt,
+        num_images_per_prompt = 1,
+        eta = 0.0,
+        generator = None,
+        latents = None,
+        output_type = "pil",
+        return_dict = True,
+        callback = None,
+        callback_steps = 1,
         **kwargs,
     ):
 
@@ -480,7 +481,8 @@ class SDText2Img(StableDiffusionBasePipeline):
 
         # 4. Prepare timesteps
         self.scheduler.set_timesteps(num_inference_steps, device=device)
-        timesteps = self.scheduler.timesteps.to(torch.float)
+        self.scheduler.timesteps = self.scheduler.timesteps.cpu().to(torch.float)
+        timesteps = self.scheduler.timesteps.to(device)
 
         # 5. Prepare latent variables
         num_channels_latents = self.unet.in_channels
@@ -513,7 +515,7 @@ class SDText2Img(StableDiffusionBasePipeline):
                 noise_pred = noise_pred_uncond + guidance_scale * (noise_pred_text - noise_pred_uncond)
 
             # compute the previous noisy sample x_t -> x_t-1
-            latents = self.scheduler.step(noise_pred, t.cpu().int(), latents, **extra_step_kwargs).prev_sample
+            latents = self.scheduler.step(noise_pred, t.cpu(), latents, **extra_step_kwargs).prev_sample
 
             # call the callback, if provided
             if callback is not None and i % callback_steps == 0:
@@ -674,6 +676,7 @@ class SDImg2Img(StableDiffusionBasePipeline):
 
         # 5. set timesteps
         self.scheduler.set_timesteps(num_inference_steps, device=device)
+        self.timesteps = self.timesteps.cpu().to(torch.float)
         timesteps = self.get_timesteps(num_inference_steps, strength, device)
         latent_timestep = timesteps[:1].repeat(batch_size * num_images_per_prompt)
 
@@ -922,7 +925,7 @@ class SDInpaint(StableDiffusionBasePipeline):
 
         return StableDiffusionPipelineOutput(images=image, nsfw_content_detected=has_nsfw_concept)
     
-print('prepare vae models...')
+print('loading vae models...')
 vae = AutoencoderKL.from_pretrained(
     'models/diffusers/runwayml/stable-diffusion-v1-5',
     # 'IDEA-CCNL/Taiyi-Stable-Diffusion-1B-Chinese-EN-v0.1',
@@ -934,7 +937,7 @@ vae = AutoencoderKL.from_pretrained(
 
 
 
-print('prepare clip text models...')
+print('loading clip text models...')
 tokenizer = CLIPTokenizer.from_pretrained(
     # 'openai/clip-vit-large-patch14',
     'models/diffusers/runwayml/stable-diffusion-v1-5/tokenizer'
@@ -950,7 +953,7 @@ text_encoder = CLIPTextModel.from_pretrained(
 # text_encoder = BertModel.from_pretrained("IDEA-CCNL/Taiyi-Stable-Diffusion-1B-Chinese-EN-v0.1").to(device)
 
 
-print('prepare attention unet models...')
+print('loading attention unet models...')
 unet = UNet2DConditionModel.from_pretrained(
     'models/diffusers/runwayml/stable-diffusion-v1-5',
     # 'IDEA-CCNL/Taiyi-Stable-Diffusion-1B-Chinese-EN-v0.1',
@@ -960,7 +963,7 @@ unet = UNet2DConditionModel.from_pretrained(
     use_auth_token=False
 ).to(device)
 
-# print('prepare attention inpaint unet models...')
+# print('loading attention inpaint unet models...')
 # unet_inpaint = UNet2DConditionModel.from_pretrained(
 #     'models/diffusers/runwayml/stable-diffusion-inpainting',
 #     # 'IDEA-CCNL/Taiyi-Stable-Diffusion-1B-Chinese-EN-v0.1',
@@ -982,11 +985,9 @@ pndm_scheduler = PNDMScheduler(
     beta_end=0.012,
     beta_schedule="scaled_linear"
 )
-euler_scheduler = EulerDiscreteScheduler(
-    num_train_timesteps=1000,
-    beta_start=0.0001,
-    beta_end=0.02,
-    beta_schedule="linear"
+euler_a_scheduler = EulerAncestralDiscreteScheduler(
+    beta_start=0.00085,
+    beta_end=0.0120,
 )
 
 text2image_pipeline = SDText2Img(
@@ -994,7 +995,7 @@ text2image_pipeline = SDText2Img(
     text_encoder=text_encoder,
     tokenizer=tokenizer,
     unet=unet,
-    scheduler=pndm_scheduler
+    scheduler=euler_a_scheduler
 )
 # generator = torch.Generator('cuda').manual_seed(42)
 # with torch.autocast("cuda"):
@@ -1012,14 +1013,14 @@ paint_pipeline = SDInpaint(
     text_encoder=text_encoder,
     tokenizer=tokenizer,
     unet=unet,
-    scheduler=pndm_scheduler
+    scheduler=euler_a_scheduler
 )
 image2image_pipeline = SDImg2Img(
     vae=vae,
     text_encoder=text_encoder,
     tokenizer=tokenizer,
     unet=unet,
-    scheduler=pndm_scheduler
+    scheduler=euler_a_scheduler
 )
 
 

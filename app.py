@@ -213,12 +213,12 @@ def main():
                                     height = gr.Slider(384,
                                                         576,
                                                         step=64,
-                                                        value=512,
+                                                        value=384,
                                                         label='图像高度')
                                     steps = gr.Slider(20,
                                                         200,
                                                         step=1,
-                                                        value=50,
+                                                        value=30,
                                                         label='步数')
                                     scale = gr.Slider(1.0,
                                                         20.0,
@@ -238,7 +238,7 @@ def main():
                                     num_images = gr.Slider(1,
                                                             9,
                                                             step=1,
-                                                            value=4,
+                                                            value=1,
                                                             label='图像数量')
 
                     with gr.Column():
@@ -966,7 +966,7 @@ def main():
         
     demo.launch(
         server_name="0.0.0.0",
-        server_port=8083,
+        server_port=8081,
         enable_queue=True,
         share=args.share,
     )

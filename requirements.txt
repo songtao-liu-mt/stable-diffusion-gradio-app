@@ -1,0 +1,13 @@
+opencv-python
+opencv-contrib-python
+opencv-python-headless
+streamlit
+transformers
+diffusers
+pypinyin
+einops
+basicsr
+realesrgan
+sentencepiece
+fifty
+git+https://github.com/openai/CLIP.git
