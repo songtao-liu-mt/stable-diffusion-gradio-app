@@ -1,4 +1,3 @@
-#!/bin/bash
+# gradio
 source ~/.bashrc
-cd /home/ubuntu/stable-diffusion-gradio-app
-nohup /opt/conda/envs/pytorch/bin/python app.py > logger.log 2>&1 &
+nohup python clients/gradio_frontend/gradio_app.py > logger.log 2>&1 &

@@ -2,6 +2,7 @@ opencv-python
 opencv-contrib-python
 opencv-python-headless
 streamlit
+gradio
 transformers
 diffusers
 pypinyin
@@ -10,4 +11,6 @@ basicsr
 realesrgan
 sentencepiece
 fifty
+timm
+fairscale
 git+https://github.com/openai/CLIP.git

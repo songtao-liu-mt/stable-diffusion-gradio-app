@@ -1,6 +1,7 @@
 __pycache__/
+.shade/
 outputs/
-models/
+app/models/
 *.pth
 *.egg-info/
 CompsVis/
@@ -9,5 +10,6 @@ ebsynth/
 logger.log
 .vscode/
 .git/
-demos/
-mt_images/
+.shaders/
+app/demos/
+app/mt_images/
