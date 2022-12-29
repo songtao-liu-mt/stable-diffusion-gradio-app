@@ -214,7 +214,7 @@ def main():
                                     steps = gr.Slider(20,
                                                         200,
                                                         step=1,
-                                                        value=50,
+                                                        value=20,
                                                         label='步数')
                                     scale = gr.Slider(1.0,
                                                         20.0,
@@ -317,7 +317,7 @@ def main():
                                     steps = gr.Slider(20,
                                                         200,
                                                         step=1,
-                                                        value=50,
+                                                        value=20,
                                                         label='步数')
                                     scale = gr.Slider(1.0,
                                                         20.0,
@@ -412,7 +412,7 @@ def main():
                                     steps = gr.Slider(20,
                                                         200,
                                                         step=1,
-                                                        value=50,
+                                                        value=20,
                                                         label='步数')
                                     scale = gr.Slider(1.0,
                                                         20.0,
@@ -514,7 +514,7 @@ def main():
                                     steps = gr.Slider(20,
                                                         200,
                                                         step=1,
-                                                        value=50,
+                                                        value=20,
                                                         label='步数')
                                     scale = gr.Slider(1.0,
                                                         20.0,
@@ -622,8 +622,7 @@ def main():
                                     steps = gr.Slider(20,
                                                         200,
                                                         step=1,
-                                                        value=50,
-
+                                                        value=20,
                                                         label='步数')
                                     scale = gr.Slider(1.0,
                                                         20.0,
@@ -717,7 +716,7 @@ def main():
                                     steps = gr.Slider(20,
                                                         200,
                                                         step=1,
-                                                        value=50,
+                                                        value=20,
                                                         label='步数')
                                     scale = gr.Slider(1.0,
                                                         20.0,
@@ -962,7 +961,7 @@ def main():
         
     demo.launch(
         server_name="0.0.0.0",
-        server_port=8083,
+        server_port=7800,
         enable_queue=True,
         share=args.share,
     )

@@ -13,7 +13,7 @@ from diffusers.models import AutoencoderKL, UNet2DConditionModel
 from diffusers.pipeline_utils import DiffusionPipeline
 from diffusers.schedulers import (
     DDIMScheduler,
-    # DPMSolverMultistepScheduler,
+    DPMSolverMultistepScheduler,
     EulerAncestralDiscreteScheduler,
     EulerDiscreteScheduler,
     LMSDiscreteScheduler,
@@ -29,6 +29,12 @@ import gc
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 from mt_filter.sensewords import ChineseFilter, EnglishFilter
 from system_config import device
+import os
+import sys
+
+__dir__ = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(__dir__)
+import prompt_parser
 
 
 logger = logging.get_logger(__name__)  # pylint: disable=invalid-name
@@ -114,7 +120,7 @@ class StableDiffusionBasePipeline(DiffusionPipeline):
             LMSDiscreteScheduler,
             EulerDiscreteScheduler,
             EulerAncestralDiscreteScheduler,
-            # DPMSolverMultistepScheduler,
+            DPMSolverMultistepScheduler,
                          ],
         # safety_checker: StableDiffusionSafetyChecker,
         # feature_extractor: CLIPFeatureExtractor,
@@ -244,10 +250,17 @@ class StableDiffusionBasePipeline(DiffusionPipeline):
         return self.device
 
     # Copied from diffusers.pipelines.stable_diffusion.pipeline_stable_diffusion.StableDiffusionPipeline._encode_prompt
-    def _encode_prompt(self, prompt, device, num_images_per_prompt, do_classifier_free_guidance, negative_prompt):
+    def _encode_prompt(
+        self,
+        prompt,
+        device,
+        num_images_per_prompt,
+        do_classifier_free_guidance,
+        negative_prompt,
+        max_embeddings_multiples=3,
+    ):
         r"""
         Encodes the prompt into text encoder hidden states.
-
         Args:
             prompt (`str` or `list(int)`):
                 prompt to be encoded
@@ -260,71 +273,36 @@ class StableDiffusionBasePipeline(DiffusionPipeline):
             negative_prompt (`str` or `List[str]`):
                 The prompt or prompts not to guide the image generation. Ignored when not using guidance (i.e., ignored
                 if `guidance_scale` is less than `1`).
+            max_embeddings_multiples (`int`, *optional*, defaults to `3`):
+                The max multiple length of prompt embeddings compared to the max output length of text encoder.
         """
         batch_size = len(prompt) if isinstance(prompt, list) else 1
 
-        text_inputs = self.tokenizer(
-            prompt,
-            padding="max_length",
-            max_length=self.tokenizer.model_max_length,
-            truncation=True,
-            return_tensors="pt",
-        )
-        text_input_ids = text_inputs.input_ids
-        untruncated_ids = self.tokenizer(prompt, padding="max_length", return_tensors="pt").input_ids
-
-        if not torch.equal(text_input_ids, untruncated_ids):
-            removed_text = self.tokenizer.batch_decode(untruncated_ids[:, self.tokenizer.model_max_length - 1 : -1])
-            logger.warning(
-                "The following part of your input was truncated because CLIP can only handle sequences up to"
-                f" {self.tokenizer.model_max_length} tokens: {removed_text}"
+        if negative_prompt is None:
+            negative_prompt = [""] * batch_size
+        elif isinstance(negative_prompt, str):
+            negative_prompt = [negative_prompt] * batch_size
+        if batch_size != len(negative_prompt):
+            raise ValueError(
+                f"`negative_prompt`: {negative_prompt} has batch size {len(negative_prompt)}, but `prompt`:"
+                f" {prompt} has batch size {batch_size}. Please make sure that passed `negative_prompt` matches"
+                " the batch size of `prompt`."
             )
-        text_embeddings = self.text_encoder(text_input_ids.to(device))[0]
 
-        # duplicate text embeddings for each generation per prompt, using mps friendly method
+        text_embeddings, uncond_embeddings = prompt_parser.get_weighted_text_embeddings(
+            pipe=self,
+            prompt=prompt,
+            uncond_prompt=negative_prompt if do_classifier_free_guidance else None,
+            max_embeddings_multiples=max_embeddings_multiples,
+        )
         bs_embed, seq_len, _ = text_embeddings.shape
         text_embeddings = text_embeddings.repeat(1, num_images_per_prompt, 1)
         text_embeddings = text_embeddings.view(bs_embed * num_images_per_prompt, seq_len, -1)
 
-        # get unconditional embeddings for classifier free guidance
         if do_classifier_free_guidance:
-            uncond_tokens: List[str]
-            if negative_prompt is None:
-                uncond_tokens = [""] * batch_size
-            elif type(prompt) is not type(negative_prompt):
-                raise TypeError(
-                    f"`negative_prompt` should be the same type to `prompt`, but got {type(negative_prompt)} !="
-                    f" {type(prompt)}."
-                )
-            elif isinstance(negative_prompt, str):
-                uncond_tokens = [negative_prompt]
-            elif batch_size != len(negative_prompt):
-                raise ValueError(
-                    f"`negative_prompt`: {negative_prompt} has batch size {len(negative_prompt)}, but `prompt`:"
-                    f" {prompt} has batch size {batch_size}. Please make sure that passed `negative_prompt` matches"
-                    " the batch size of `prompt`."
-                )
-            else:
-                uncond_tokens = negative_prompt
-
-            max_length = text_input_ids.shape[-1]
-            uncond_input = self.tokenizer(
-                uncond_tokens,
-                padding="max_length",
-                max_length=max_length,
-                truncation=True,
-                return_tensors="pt",
-            )
-            uncond_embeddings = self.text_encoder(uncond_input.input_ids.to(device))[0]
-
-            # duplicate unconditional embeddings for each generation per prompt, using mps friendly method
-            seq_len = uncond_embeddings.shape[1]
+            bs_embed, seq_len, _ = uncond_embeddings.shape
             uncond_embeddings = uncond_embeddings.repeat(1, num_images_per_prompt, 1)
-            uncond_embeddings = uncond_embeddings.view(batch_size * num_images_per_prompt, seq_len, -1)
-
-            # For classifier free guidance, we need to do two forward passes.
-            # Here we concatenate the unconditional and text embeddings into a single batch
-            # to avoid doing two forward passes
+            uncond_embeddings = uncond_embeddings.view(bs_embed * num_images_per_prompt, seq_len, -1)
             text_embeddings = torch.cat([uncond_embeddings, text_embeddings])
 
         return text_embeddings
@@ -414,7 +392,7 @@ class SDText2Img(StableDiffusionBasePipeline):
             LMSDiscreteScheduler,
             EulerDiscreteScheduler,
             EulerAncestralDiscreteScheduler,
-            # DPMSolverMultistepScheduler,
+            DPMSolverMultistepScheduler,
         ],
         # safety_checker: StableDiffusionSafetyChecker,
         # feature_extractor: CLIPFeatureExtractor,
@@ -545,7 +523,7 @@ class SDImg2Img(StableDiffusionBasePipeline):
                 LMSDiscreteScheduler,
                 EulerDiscreteScheduler,
                 EulerAncestralDiscreteScheduler,
-                # DPMSolverMultistepScheduler,
+                DPMSolverMultistepScheduler,
             ],
             # safety_checker: StableDiffusionSafetyChecker,
             # feature_extractor: CLIPFeatureExtractor
@@ -921,7 +899,8 @@ class SDInpaint(StableDiffusionBasePipeline):
     
 print('prepare vae models...')
 vae = AutoencoderKL.from_pretrained(
-    'models/diffusers/runwayml/stable-diffusion-v1-5',
+    # 'models/diffusers/runwayml/stable-diffusion-v1-5',
+    'checkpoints_0.0.2',
     # 'IDEA-CCNL/Taiyi-Stable-Diffusion-1B-Chinese-EN-v0.1',
     subfolder='vae',
     revision="fp16", 
@@ -934,11 +913,13 @@ vae = AutoencoderKL.from_pretrained(
 print('prepare clip text models...')
 tokenizer = CLIPTokenizer.from_pretrained(
     # 'openai/clip-vit-large-patch14',
-    'models/diffusers/runwayml/stable-diffusion-v1-5/tokenizer'
+    # 'models/diffusers/runwayml/stable-diffusion-v1-5/tokenizer',
+    'checkpoints_0.0.2/tokenizer'
     )
 text_encoder = CLIPTextModel.from_pretrained(
     # 'openai/clip-vit-large-patch14',
-    'models/diffusers/runwayml/stable-diffusion-v1-5/text_encoder',
+    # 'models/diffusers/runwayml/stable-diffusion-v1-5/text_encoder',
+    'checkpoints_0.0.2/text_encoder'
     # revision="fp16", 
     # torch_dtype=torch.float16,
 ).to(device)
@@ -949,7 +930,8 @@ text_encoder = CLIPTextModel.from_pretrained(
 
 print('prepare attention unet models...')
 unet = UNet2DConditionModel.from_pretrained(
-    'models/diffusers/runwayml/stable-diffusion-v1-5',
+    # 'models/diffusers/runwayml/stable-diffusion-v1-5',
+    'checkpoints_0.0.2',
     # 'IDEA-CCNL/Taiyi-Stable-Diffusion-1B-Chinese-EN-v0.1',
     subfolder='unet',
     revision="fp16", 
@@ -979,6 +961,18 @@ pndm_scheduler = PNDMScheduler(
     beta_end=0.012,
     beta_schedule="scaled_linear"
 )
+euler_a_scheduler = EulerAncestralDiscreteScheduler(
+    beta_start=0.00085,
+    beta_end=0.012,
+)
+
+dpmplusplus_2m_scheduler = DPMSolverMultistepScheduler(
+            num_train_timesteps=1000,
+            beta_start=0.00085,
+            beta_end=0.0120,
+            beta_schedule="scaled_linear",
+            algorithm_type="dpmsolver++"
+        )
 
 
 text2image_pipeline = SDText2Img(
@@ -986,7 +980,7 @@ text2image_pipeline = SDText2Img(
     text_encoder=text_encoder,
     tokenizer=tokenizer,
     unet=unet,
-    scheduler=pndm_scheduler
+    scheduler=dpmplusplus_2m_scheduler
 )
 # generator = torch.Generator('cuda').manual_seed(42)
 # with torch.autocast("cuda"):
@@ -1004,14 +998,14 @@ paint_pipeline = SDInpaint(
     text_encoder=text_encoder,
     tokenizer=tokenizer,
     unet=unet_inpaint,
-    scheduler=pndm_scheduler
+    scheduler=dpmplusplus_2m_scheduler
 )
 image2image_pipeline = SDImg2Img(
     vae=vae,
     text_encoder=text_encoder,
     tokenizer=tokenizer,
     unet=unet,
-    scheduler=pndm_scheduler
+    scheduler=dpmplusplus_2m_scheduler
 )
 
 
