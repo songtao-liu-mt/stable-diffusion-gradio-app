@@ -19,18 +19,14 @@ from sd_utils import generation_callback
 import hydralit as st
 
 
-# streamlit imports
-from streamlit import StopException, StreamlitAPIException
 
 #streamlit components section
 from streamlit_server_state import server_state, server_state_lock
 import hydralit_components as hc
 
 # streamlit imports
-from streamlit import StopException
 #from streamlit.elements import image as STImage
 import streamlit.components.v1 as components
-from streamlit.runtime.media_file_manager  import media_file_manager
 from streamlit.elements.image import image_to_url
 
 #other imports
@@ -43,7 +39,7 @@ from torchvision import transforms
 
 from model import AppModel
 
-os.environ["MTGPU_MAX_MEM_USAGE_GB"]="15"
+os.environ["MTGPU_MAX_MEM_USAGE_GB"]="30"
 
 # Temp imports
 
@@ -67,23 +63,51 @@ except:
 #         url="http://localhost:3001",
 #     )
 
+# LEXAMPLES = [
+# "超写实老虎，黑纸，元素，白金，青色， 巴洛克， 洛可可， 水墨，细致，错综复杂的水墨插画",
+
+# "一幅中国古代宫殿风景画的写实水彩画，远处是中国古代城墙的入口，背景是雾蒙蒙的山脉",
+
+# "gta9游戏玩法，16k分辨率，超级未来主义的图像",
+
+# "古埃及，繁荣，青翠的高科技城市，由greg rutkowski, alex grey创作的数字绘画，4k高清",
+
+# "红海世界之树的美丽画作， 詹姆斯格尼印象派风格。 非常详细的细节。 幻想，超详细，清晰的焦点，柔和的光线。 光线追踪，由ivan aivazovsky 和 greg rutkowski 绘制",
+
+# "Concept art painting of a cozy village in a mountainous forested valley, historic english and japanese architecture, realistic, detailed, cel shaded, in the style of makoto shinkai and greg rutkowski and james gurney",
+
+# "Amazon valkyrie athena, d & d, fantasy, portrait, highly detailed, headshot, digital painting, trending on artstation, concept art, sharp focus, illustration, art by artgerm and greg rutkowski and magali villeneuve",
+
+# "Black haired little girl. her hair is very windy. she is in a black and white dress, that white dress has black triangles as a pattern. she is carrying a big glistening green diamond shaped crystal on her hands. art by artgerm and greg rutkowski and alphonse mucha and ian sprigger and wlop and krenz cushart",
+
+# ]
+
 LEXAMPLES = [
-"超写实老虎，黑纸，元素，白金，青色， 巴洛克， 洛可可， 水墨，细致，错综复杂的水墨插画",
+    "一个（古代诗人）正在山顶远眺，为了探索未知的风景。中国风格，水墨画风格，线描勾勒，高清细节。",
 
-"一幅中国古代宫殿风景画的写实水彩画，远处是中国古代城墙的入口，背景是雾蒙蒙的山脉",
+    "(an ancient poet was looking far from the top of the mountains), trying to pursue the truth, expolring sky. Chinese style, ink-painting style, detailed and high-definition",
 
-"gta9游戏玩法，16k分辨率，超级未来主义的图像",
+    "一只小白兔在公园的晚上庆祝中国兔年，周围有灯笼，背景正在放烟花。由thomaskinkade绘制，红色主题，pixiv，写实画。",
 
-"古埃及，繁荣，青翠的高科技城市，由greg rutkowski, alex grey创作的数字绘画，4k高清",
+    "a white rabbit celebrates the Chinese Rabbit Year in the garden at night, surrounded by fireworks and lanterns in the background. drawing by kiyohara tama and thomas kinkade, red color scheme, intricate details, trending on pixiv",
 
-"红海世界之树的美丽画作， 詹姆斯格尼印象派风格。 非常详细的细节。 幻想，超详细，清晰的焦点，柔和的光线。 光线追踪，由ivan aivazovsky 和 greg rutkowski 绘制",
+    "蘑菇层的房屋长在一座山上。作者：丹·蒙福德、村田佑介、真开真央、罗斯·川，宇宙、天堂、上帝射线、复杂细节、电影、赛尔阴影、虚幻引擎，有在artstation、pixiv上的特色",
 
-"Concept art painting of a cozy village in a mountainous forested valley, historic english and japanese architecture, realistic, detailed, cel shaded, in the style of makoto shinkai and greg rutkowski and james gurney",
+    "the mushroom story house grow on a mountain. by dan mumford, yusuke murata, makoto shinkai, ross tran, cosmic, heavenly, god rays, intricate detail, cinematic, cel shaded, unreal engine, featured on artstation, pixiv ",
 
-"Amazon valkyrie athena, d & d, fantasy, portrait, highly detailed, headshot, digital painting, trending on artstation, concept art, sharp focus, illustration, art by artgerm and greg rutkowski and magali villeneuve",
+    "一座奇幻城堡，门前有几棵树，黑暗奇幻浪漫书封面。高度详细，幻想艺术品，数字绘画，gregrutkowski，8k，概念艺术，艺术站，三分法则，notext",
 
-"Black haired little girl. her hair is very windy. she is in a black and white dress, that white dress has black triangles as a pattern. she is carrying a big glistening green diamond shaped crystal on her hands. art by artgerm and greg rutkowski and alphonse mucha and ian sprigger and wlop and krenz cushart",
+    "abstract dark fantasy romance book cover of tree in front of a fantasy castle. highly detailed, fantasy artwork, digital painting, greg rutkowski, 8k, concept art, artstation, hyper detailed, rule of thirds, no text",
 
+    "一名男子站在画廊的一组绘画作品前。robertrauschenberg的抽象画，pixiv，美国场景绘画，学院派艺术，染料转移，动态构图",
+
+    "a man standing in front of a display of paintings, an abstract painting by robert rauschenberg, pixiv, american scene painting, academic art, dye - transfer, dynamic composition",
+
+    "一个秋天山谷中湖边的神秘村庄。AndroidJones,EarnstHaeckel,JamesJean绘制的一幅超高清详细画作。行为竞赛获胜者，生成艺术，巴洛克，复杂的图案，分形，电影静物，写实照片",
+
+    "an ultra hd detailed painting of a mysterious village by a lake, in an autumn mountain valley. by Android Jones, Earnst Haeckel, James Jean. behance contest winner, generative art, Baroque, intricate patterns, fractalism, movie still, photorealistic",
+
+    "联想问天",
 ]
 
 GUIDENCE = '''为了更好地生成文本提示，从而生成优美的图片。文本输入通常遵循一定的原则。本篇将带领大家生成一个漂亮的文本输入。
@@ -176,7 +200,7 @@ def layout():
             if not "text_v" in st.session_state:
                 st.session_state["text_v"] = ""
 
-            prompt = st.text_area("文字输入", st.session_state["text_v"], placeholder="支持英文或者中文输入, 推荐使用右边示例或阅读引导！", 
+            prompt = st.text_area("文字输入", st.session_state["text_v"], placeholder="支持英文或者中文输入, 推荐使用下面示例或阅读引导！", 
                                    label_visibility="collapsed", height=190, disabled=disable_text)
 
         with img_tab:
@@ -211,7 +235,8 @@ def layout():
                 st.write("")
 
         #with st.form("txt2img-outputs"):
-        la, qua, generate,stop_col = st.columns([1, 6, 1.2, 0.8])
+        la, qua, = st.columns([1, 5,])
+        generate,stop_col, _ = st.columns([1, 1, 6])
         with la:
             st.write("生成质量:")
             #st.markdown("""
@@ -229,8 +254,8 @@ def layout():
             st.session_state.sampling_steps = qlist.index(quality) * 20 + 10
 
         #generate_button = generate.form_submit_button("开始生成")
-        generate_button = generate.button("开始生成")
-        stop_button = stop_col.button("中止")
+        generate_button = generate.button("开始生成", type="primary", key="generate")
+        stop_button = stop_col.button("中止", type="primary", key="interrupted")
 
         ex_tab, guide_tab = st.tabs(["输入示例","输入引导"])
         with ex_tab:
@@ -242,14 +267,43 @@ def layout():
             ex6 = st.button(LEXAMPLES[5], on_click=example, kwargs={'index': 5})
             ex7 = st.button(LEXAMPLES[6], on_click=example, kwargs={'index': 6})
             ex8 = st.button(LEXAMPLES[7], on_click=example, kwargs={'index': 7})
+            ex9 = st.button(LEXAMPLES[8], on_click=example, kwargs={'index': 8})
+            ex10 = st.button(LEXAMPLES[9], on_click=example, kwargs={'index': 9})
+            ex11 = st.button(LEXAMPLES[10], on_click=example, kwargs={'index': 10})
+            ex12 = st.button(LEXAMPLES[11], on_click=example, kwargs={'index': 11})
+            ex13 = st.button(LEXAMPLES[12], on_click=example, kwargs={'index': 12})
 
         with guide_tab:
             st.markdown(GUIDENCE)
         st.markdown(
             """
             <style>
-            .css-6kekos.edgvbvh9{
+            .css-1x8cf1d.edgvbvh10{
                 text-align: left;
+            }
+            .css-1x8cf1d.edgvbvh10:hover{
+			    color: #FF671D;
+			    border-color: #FF671D;
+            }
+            .css-1x8cf1d.edgvbvh10:focus{
+			    color: #FF671D;
+			    border-color: #FF671D;
+                box-shadow: rgb(255 103 29 / 50%) 0px 0px 0px 0.2rem
+            }
+            .css-firdtp{
+                background-color: rgb(255, 255, 255);
+                border: 1px solid rgba(49, 51, 63, 0.2);
+                color: rgb(0, 0, 0);
+            }
+            .css-firdtp:hover{
+                background-color: #FF671D;
+                border-color: #FF671D;
+                color: rgb(255, 255, 255);
+            }
+            .css-firdtp:focus{
+                background-color: #FF671D;
+                border-color: #FF671D;
+                color: rgb(255, 255, 255);
             }
             </style>
             """,unsafe_allow_html=True

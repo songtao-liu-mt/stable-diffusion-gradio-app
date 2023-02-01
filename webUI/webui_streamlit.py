@@ -85,12 +85,42 @@ def layout():
 	st.set_page_config(page_title="Stable Diffusion Playground", layout="wide")
 	#app = st.HydraApp(title='Stable Diffusion WebUI', favicon="", sidebar_state="expanded",
 	                  #hide_streamlit_markers=True, allow_url_nav=True , clear_cross_app_sessions=False)
-	st.header('摩尔线程马良 AIGC 创作平台')
+	st.header('马良 AIGC 创作平台')
 
 	with st.empty():
 		# load css as an external file, function has an option to local or remote url. Potential use when running from cloud infra that might not have access to local path.
 		load_css(True, 'frontend/css/streamlit.main.css')
 		
+	st.markdown(
+		"""
+		<style>
+		h2{
+			color: #FF671D;
+		}
+		.st-al{
+			color: #FF671D;
+		}
+		.st-co{
+			background-color: #FF671D;
+		}
+		.st-c5{
+			color: #FF671D;
+		}
+		.st-ck:focus{
+			color: #FF671D;
+		}
+		.st-e3:active{
+			border: 1px solid #FF671D;
+		}
+		.st-ck:hover{
+			color: #FF671D;
+		}
+		.st-at{
+			background-color: #FFEDE4;
+		}
+		</style>
+		""",unsafe_allow_html=True
+	)
 	#st.experimental_set_query_params(page='马良平台')
 	try:
 		set_page_title("马良平台")

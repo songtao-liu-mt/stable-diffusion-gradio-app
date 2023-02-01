@@ -19,7 +19,6 @@ import hydralit as st
 
 
 # streamlit imports
-from streamlit import StopException
 
 #streamlit components section
 from streamlit_server_state import server_state, server_state_lock
@@ -886,7 +885,7 @@ def ModelLoader(models,load=False,unload=False,imgproc_realesrgan_model_name='Re
 @retry(tries=5)
 def generation_callback(img, i=0):
     if "update_preview_frequency" not in st.session_state:
-        raise StopException
+        raise Exception
 
     try:
         if i == 0:
