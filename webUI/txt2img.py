@@ -83,6 +83,10 @@ except:
 # ]
 
 LEXAMPLES = [
+    "（一间白色现代化风格的实验室里，互联网数据中心，摆放着几台超级计算机设备）。联想问天，计算机技术，智慧计算机，元宇宙虚拟现实。写实风格，无文字",
+
+    "(a white modern-style lab, Internet Data Center, with supercomputers in it.) Lenovo WenTian, computer technology, smart computers, metacosm virtual reality. realistic style, no text.",
+
     "一个（古代诗人）正在山顶远眺，为了探索未知的风景。中国风格，水墨画风格，线描勾勒，高清细节。",
 
     "(an ancient poet was looking far from the top of the mountains), trying to pursue the truth, expolring sky. Chinese style, ink-painting style, detailed and high-definition",
